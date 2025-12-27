@@ -9,7 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   // Build-time env flags (NEXT_PUBLIC_* are available client-side)
   const demoAuth = (process.env.NEXT_PUBLIC_DEMO_AUTH || 'false') === 'true';
-  const hasSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const prismaAuth = true; // We authenticate against Prisma `User` table
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,8 +55,8 @@ export default function LoginPage() {
             (<span className="font-semibold">ADMIN_EMAIL/ADMIN_PASSWORD</span> ou
             <span className="font-semibold">AUTHOR_EMAIL/AUTHOR_PASSWORD</span>).
           </div>
-        ) : hasSupabase ? (
-          <div className="text-brand-gray-700">Authentification via Supabase.</div>
+        ) : prismaAuth ? (
+          <div className="text-brand-gray-700">Authentification via la base de données (table <span className="font-semibold">User</span>).</div>
         ) : (
           <div className="text-brand-gray-700">Aucune configuration d'auth détectée. Configurez Supabase ou activez le mode démo.</div>
         )}

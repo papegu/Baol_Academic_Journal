@@ -1,4 +1,3 @@
-import { getSupabaseClient } from './supabaseClient';
 import { getEditorPassword } from './demoAuthState';
 import { prisma } from './prisma';
 import crypto from 'crypto';
@@ -42,35 +41,13 @@ export async function signIn(email: string, password: string) {
     }
     throw new Error('Identifiants invalides');
   }
-  // Prisma-based auth mode (fallback or forced)
-  const usePrisma = process.env.USE_PRISMA_AUTH === 'true' || !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (usePrisma) {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) throw new Error('Identifiants invalides');
-    const ok = user.password && user.password.length > 0 ? user.password === hashPassword(password) : false;
-    if (!ok) throw new Error('Identifiants invalides');
-    const role = user.role as any;
-    return { user: { email: user.email, user_metadata: { name: user.name, role } } as any, role, access_token: 'prisma-auth' };
-  }
-
-  // Supabase auth (default)
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data.session) {
-      throw new Error(error?.message || 'Identifiants invalides');
-    }
-    const role = (data.user?.user_metadata as any)?.role || (email === 'admin@bajp.org' ? 'ADMIN' : 'AUTHOR');
-    return { user: data.user, role, access_token: data.session.access_token };
-  } catch (e) {
-    // Final fallback to Prisma if Supabase fetch failed in production
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) throw new Error('Identifiants invalides');
-    const ok = user.password && user.password.length > 0 ? user.password === hashPassword(password) : false;
-    if (!ok) throw new Error('Identifiants invalides');
-    const role = user.role as any;
-    return { user: { email: user.email, user_metadata: { name: user.name, role } } as any, role, access_token: 'prisma-auth' };
-  }
+  // Always authenticate against Prisma `User` table (Supabase DB)
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) throw new Error('Identifiants invalides');
+  const ok = user.password && user.password.length > 0 ? user.password === hashPassword(password) : false;
+  if (!ok) throw new Error('Identifiants invalides');
+  const role = user.role as any;
+  return { user: { email: user.email, user_metadata: { name: user.name, role } } as any, role, access_token: 'prisma-auth' };
 }
 
 export async function signUp(name: string, email: string, password: string) {
@@ -78,14 +55,9 @@ export async function signUp(name: string, email: string, password: string) {
   if (process.env.DEMO_AUTH === 'true') {
     return { user: { email, user_metadata: { name } } as any };
   }
-  if (process.env.USE_PRISMA_AUTH === 'true') {
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) throw new Error('Email déjà utilisé');
-    const user = await prisma.user.create({ data: { email, name, password: hashPassword(password), role: 'AUTHOR' as any } });
-    return { user: { email: user.email, user_metadata: { name: user.name } } as any };
-  }
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
-  if (error) throw new Error(error.message);
-  return { user: data.user };
+  // Always register in Prisma `User` table
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) throw new Error('Email déjà utilisé');
+  const user = await prisma.user.create({ data: { email, name, password: hashPassword(password), role: 'AUTHOR' as any } });
+  return { user: { email: user.email, user_metadata: { name: user.name } } as any };
 }
