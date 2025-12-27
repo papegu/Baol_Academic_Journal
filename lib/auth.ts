@@ -7,6 +7,9 @@ export async function signIn(email: string, password: string) {
     const adminPassword = process.env.ADMIN_PASSWORD || '';
     const authorEmail = process.env.AUTHOR_EMAIL || '';
     const authorPassword = process.env.AUTHOR_PASSWORD || '';
+    // Dedicated editor credentials as requested
+    const editorEmail = process.env.EDITOR_EMAIL || 'editeur@senegal-livres.sn';
+    const editorPassword = process.env.EDITOR_PASSWORD || 'admin@#$%';
 
     if (adminEmail && adminPassword && email === adminEmail && password === adminPassword) {
       return {
@@ -20,6 +23,13 @@ export async function signIn(email: string, password: string) {
         user: { email: authorEmail, user_metadata: { name: 'Author', role: 'AUTHOR' } } as any,
         role: 'AUTHOR',
         access_token: 'demo-author-token'
+      };
+    }
+    if (email === editorEmail && password === editorPassword) {
+      return {
+        user: { email: editorEmail, user_metadata: { name: 'Editeur', role: 'EDITOR' } } as any,
+        role: 'EDITOR',
+        access_token: 'demo-editor-token'
       };
     }
     throw new Error('Identifiants invalides');

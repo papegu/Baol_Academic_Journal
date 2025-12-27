@@ -11,7 +11,7 @@ export default function AdminPage() {
   // Mock : vérifie le rôle dans localStorage (à remplacer par une vraie auth plus tard)
   useEffect(() => {
     const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
-    if (role !== 'ADMIN') {
+    if (role !== 'ADMIN' && role !== 'EDITOR') {
       router.replace('/login');
     }
   }, [router]);

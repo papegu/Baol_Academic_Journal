@@ -23,10 +23,18 @@ export default function LoginPage() {
       if (res.ok) {
         const data = await res.json();
         if (typeof window !== 'undefined') {
-          localStorage.setItem('role', data.role || 'AUTHOR');
+          const role = data.role || 'AUTHOR';
+          localStorage.setItem('role', role);
           localStorage.setItem('access_token', data.access_token || '');
         }
-        router.push('/');
+        const role = data.role || 'AUTHOR';
+        if (role === 'ADMIN') {
+          router.push('/admin');
+        } else if (role === 'EDITOR') {
+          router.push('/dashboard/editor');
+        } else {
+          router.push('/dashboard/author');
+        }
       } else {
         const data = await res.json();
         setError(data.message || 'Erreur lors de la connexion');
