@@ -9,14 +9,23 @@ export default function AuthorDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/articles?status=SUBMITTED')
-      .then(res => res.json())
-      .then(data => { setArticles(data.articles || []); setLoading(false); });
+    // Prefer my articles endpoint if available, fallback to submitted
+    fetch('/api/submissions')
+      .then(async (res) => {
+        if (res.ok) return res.json();
+        const alt = await fetch('/api/articles?status=SUBMITTED');
+        return alt.json();
+      })
+      .then((data) => {
+        const list = data.submissions || data.articles || [];
+        setArticles(list);
+        setLoading(false);
+      });
   }, []);
 
   const submitted = articles.length;
-  const accepted = articles.filter((a) => a.status === 'ACCEPTED').length;
-  const published = articles.filter((a) => a.status === 'PUBLISHED').length;
+  const accepted = articles.filter((a: any) => a.status === 'ACCEPTED').length;
+  const published = articles.filter((a: any) => a.status === 'PUBLISHED').length;
 
   return (
     <div className="space-y-6">
