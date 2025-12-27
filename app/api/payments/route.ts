@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { listPaidTransactions } from '../../../lib/transactions';
+import { prisma } from '../../../lib/prisma';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -9,5 +10,7 @@ function isAuthorized() {
 
 export async function GET() {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  return NextResponse.json({ payments: listPaidTransactions() });
+  if (process.env.DEMO_AUTH === 'true') return NextResponse.json({ payments: listPaidTransactions() });
+  const payments = await prisma.payment.findMany({ include: { tx: true } });
+  return NextResponse.json({ payments });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { listBooks, createBook, Book } from '../../../lib/books';
+import { prisma } from '../../../lib/prisma';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -9,7 +10,9 @@ function isAuthorized() {
 
 export async function GET() {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  return NextResponse.json({ books: listBooks() });
+  if (process.env.DEMO_AUTH === 'true') return NextResponse.json({ books: listBooks() });
+  const books = await prisma.book.findMany();
+  return NextResponse.json({ books });
 }
 
 export async function POST(request: Request) {
@@ -19,6 +22,10 @@ export async function POST(request: Request) {
   if (!title || !authors || !description) {
     return NextResponse.json({ error: 'Champs manquants' }, { status: 400 });
   }
-  const created = createBook({ title, authors, description, pdfUrl });
-  return NextResponse.json({ book: created }, { status: 201 });
+  if (process.env.DEMO_AUTH === 'true') {
+    const created = createBook({ title, authors, description, pdfUrl });
+    return NextResponse.json({ book: created }, { status: 201 });
+  }
+  const book = await prisma.book.create({ data: { title, authors, description, pdfUrl } });
+  return NextResponse.json({ book }, { status: 201 });
 }
