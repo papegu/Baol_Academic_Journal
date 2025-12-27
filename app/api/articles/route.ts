@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listArticlesByStatus, submitArticle, updateArticleStatus } from '../../../backend/articles';
+import { listArticlesByStatus, submitArticle, updateArticleStatus } from '@/lib/articles';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
