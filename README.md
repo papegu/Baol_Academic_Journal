@@ -1,40 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/create-next-app).
+# Baol Academic Journal Platform
 
-## Getting Started
+Fullstack Next.js 14 application for managing submissions, editorial review, payment, and publication.
 
-First, run the development server:
+Frontend
+- App Router under `app/` with pages: home, domains, articles, submit, login, register, admin/editor dashboards, settings, about, guidelines.
+- Tailwind CSS palette in [tailwind.config.ts](tailwind.config.ts) for academic green/blue/gray.
+- Shared components: [Header](components/Header.tsx), [Footer](components/Footer.tsx), [Sidebar](components/Sidebar.tsx), [DomainsSection](components/DomainsSection.tsx), [StatCard](components/StatCard.tsx), [ArticleList](components/ArticleList.tsx), [PaymentButton](components/PaymentButton.tsx).
 
-```bash
+Backend
+- Route handlers under `app/api/*` using service modules in `backend/*`.
+- Articles service: [backend/articles.ts](backend/articles.ts) (list, getById, submit, updateStatus — mock).
+- Reviews service: [backend/reviews.ts](backend/reviews.ts) for editor notes (mock).
+- Auth: Supabase via [lib/supabaseClient.ts](lib/supabaseClient.ts) and [lib/supabaseAdmin.ts](lib/supabaseAdmin.ts).
+- PayTech (stub): initiation and callback endpoints.
+
+Environment
+- Configure `.env.local`:
+	- `NEXT_PUBLIC_SUPABASE_URL`
+	- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+	- `SUPABASE_SERVICE_ROLE_KEY`
+	- `SETUP_TOKEN`
+	- `DATABASE_URL` (optional for Prisma)
+
+Getting Started
+```powershell
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Open http://localhost:3000.
+
+Bootstrap Admin (one-time)
+```powershell
+Invoke-WebRequest -Uri "http://localhost:3000/api/bootstrap/admin" -Method POST `
+	-Headers @{ "x-setup-token" = "YOUR_SETUP_TOKEN"; "Content-Type" = "application/json" } `
+	-Body '{"email":"admin@bajp.org","password":"admin@#$%"}'
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/route.ts`. The page auto-updates as you edit the file.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## API Routes
-
-This directory contains example API routes for the headless API app.
-
-For more details, see [route.js file convention](https://nextjs.org/docs/app/api-reference/file-conventions/route).
+Notes
+- Supabase keys required for auth endpoints.
+- Mock services will be replaced with Prisma-backed persistence.

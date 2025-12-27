@@ -1,0 +1,169 @@
+\documentclass[11pt,a4paper]{article}
+
+% -------------------------------------------------
+% ENCODING & LANGUAGE
+% -------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,french]{babel}
+
+% -------------------------------------------------
+% PAGE LAYOUT
+% -------------------------------------------------
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% -------------------------------------------------
+% FONTS (STABLE)
+% -------------------------------------------------
+\usepackage{mathptmx}
+
+% -------------------------------------------------
+% MATHEMATICS
+% -------------------------------------------------
+\usepackage{amsmath}
+
+% -------------------------------------------------
+% FIGURES & TABLES
+% -------------------------------------------------
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{caption}
+
+% -------------------------------------------------
+% AUTHORS & AFFILIATIONS
+% -------------------------------------------------
+\usepackage{authblk}
+
+% -------------------------------------------------
+% HEADER & FOOTER
+% -------------------------------------------------
+\usepackage{fancyhdr}
+\setlength{\headheight}{22pt}
+
+% -------------------------------------------------
+% LINKS
+% -------------------------------------------------
+\usepackage[colorlinks=true,
+            linkcolor=black,
+            citecolor=black,
+            urlcolor=blue]{hyperref}
+
+% -------------------------------------------------
+% JOURNAL HEADER
+% -------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyhead[L]{%
+\includegraphics[height=0.8cm]{logo.png}
+}
+
+\fancyhead[C]{%
+\footnotesize
+\textbf{Baol Academic Journal Platform}\\
+Journal of Applied Research in Agriculture, Health and Living Environment
+}
+
+\fancyhead[R]{%
+\footnotesize
+e-ISSN: XXXX--XXXX
+}
+
+\renewcommand{\headrulewidth}{0.3pt}
+
+% -------------------------------------------------
+% AUTHORS
+% -------------------------------------------------
+\author[1]{First Author Name}
+\author[2]{Second Author Name}
+\author[1]{Third Author Name}
+
+\affil[1]{Affiliation, Institution, Country}
+\affil[2]{Affiliation, Institution, Country}
+
+\affil[*]{\textbf{Corresponding author:} \texttt{email@domain.com}}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+\noindent
+\textbf{Abstract} \\
+The abstract should concisely present the research context, objectives, methodology, key results, and main conclusions.
+\end{abstract}
+
+\noindent\textbf{Keywords:} Applied research, Agriculture, Health, Living environment, Environmental modelling
+
+
+\vspace{1em}
+
+% -------------------------------------------------
+% 1. INTRODUCTION
+% -------------------------------------------------
+\section{Introduction}
+This section should introduce the research problem, its applied relevance, and the objectives of the study. Authors are encouraged to clearly state the societal, environmental, or health implications.
+
+% -------------------------------------------------
+% 2. MATERIALS AND METHODS
+% -------------------------------------------------
+\section{Materials and Methods}
+Describe the study area, data sources, experimental design, and analytical or statistical methods. This section must ensure reproducibility.
+
+% -------------------------------------------------
+% 3. RESULTS
+% -------------------------------------------------
+\section{Results}
+Present the main results using figures and tables where appropriate.
+
+\begin{table}[H]
+\centering
+\caption{Example of results table}
+\begin{tabular}{lcc}
+\toprule
+Variable & Value & Unit \\
+\midrule
+Soil organic carbon & 1.85 & \% \\
+Crop yield increase & 23 & \% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% -------------------------------------------------
+% 4. DISCUSSION
+% -------------------------------------------------
+\section{Discussion}
+Discuss the results in relation to existing literature and highlight practical implications for policy, management, or decision support.
+
+% -------------------------------------------------
+% 5. CONCLUSION
+% -------------------------------------------------
+\section{Conclusion}
+Summarize the main findings and outline perspectives for future applied research and implementation.
+
+% -------------------------------------------------
+% ACKNOWLEDGEMENTS
+% -------------------------------------------------
+\section*{Acknowledgements}
+(Optional) Acknowledge funding institutions, research programs, or individuals.
+
+% -------------------------------------------------
+% REFERENCES
+% -------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{FAO2023}
+FAO. (2023). \textit{Agroecology and sustainable food systems}. Rome: FAO.
+
+\bibitem{Smith2022}
+Smith, J., \& Doe, A. (2022). Applied machine learning for environmental monitoring. \textit{Environmental Modelling}, 45, 120--135.
+
+\end{thebibliography}
+
+\end{document}
