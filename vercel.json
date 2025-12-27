@@ -3,7 +3,6 @@
     "api/**": {
       "runtime": "nodejs20.x"
     }
-  }
-}{
+  },
   "buildCommand": "npm ci --no-audit --no-fund && npm run build"
 }
