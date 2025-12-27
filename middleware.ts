@@ -5,16 +5,23 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const role = req.cookies.get('role')?.value || '';
 
-  const isAdminArea = pathname.startsWith('/admin') || pathname.startsWith('/dashboard/editor');
-  const isAuthorArea = pathname.startsWith('/dashboard/author');
+  const isAdminPath = pathname.startsWith('/admin');
+  const isEditorPath = pathname.startsWith('/dashboard/editor');
+  const isAuthorPath = pathname.startsWith('/dashboard/author');
 
-  if (isAdminArea && role !== 'ADMIN') {
+  if (isAdminPath && role !== 'ADMIN') {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  if (isAuthorArea && !role) {
+  if (isEditorPath && role !== 'ADMIN' && role !== 'EDITOR') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+
+  if (isAuthorPath && !role) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
