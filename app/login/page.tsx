@@ -7,6 +7,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  // Build-time env flags (NEXT_PUBLIC_* are available client-side)
+  const demoAuth = (process.env.NEXT_PUBLIC_DEMO_AUTH || 'false') === 'true';
+  const hasSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +39,20 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded shadow">
       <h2 className="text-xl font-bold mb-4">Connexion</h2>
+      {/* Auth mode banner */}
+      <div className="mb-4 rounded border px-3 py-2 text-sm">
+        {demoAuth ? (
+          <div className="text-brand-gray-700">
+            Mode démo activé. Utilisez les identifiants configurés dans l'environnement
+            (<span className="font-semibold">ADMIN_EMAIL/ADMIN_PASSWORD</span> ou
+            <span className="font-semibold">AUTHOR_EMAIL/AUTHOR_PASSWORD</span>).
+          </div>
+        ) : hasSupabase ? (
+          <div className="text-brand-gray-700">Authentification via Supabase.</div>
+        ) : (
+          <div className="text-brand-gray-700">Aucune configuration d'auth détectée. Configurez Supabase ou activez le mode démo.</div>
+        )}
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full border px-3 py-2 rounded" />
         <input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} required className="w-full border px-3 py-2 rounded" />
