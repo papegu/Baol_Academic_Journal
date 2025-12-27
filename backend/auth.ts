@@ -2,8 +2,9 @@ export type User = {
   id: number;
   name: string;
   email: string;
-  passwordHash: string;
+  password: string;
   role: 'AUTHOR' | 'ADMIN';
+  createdAt: Date;
 };
 
 // In-memory mock users
@@ -19,15 +20,16 @@ export async function register(name: string, email: string, password: string) {
     id: userSeq++,
     name,
     email,
-    passwordHash: `plain:${password}`,
+    password: password,
     role: 'AUTHOR',
+    createdAt: new Date(),
   };
   users.push(user);
   return { ok: true, user } as const;
 }
 
 export async function login(email: string, password: string) {
-  const u = users.find(u => u.email === email && u.passwordHash === `plain:${password}`);
+  const u = users.find(u => u.email === email && u.password === password);
   if (!u) return { ok: false, message: 'Identifiants invalides' } as const;
   // Return a very simple mock session token
   return { ok: true, token: `mock-token-${u.id}`, user: u } as const;
