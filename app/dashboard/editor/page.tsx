@@ -50,35 +50,35 @@ export default function EditorDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-brand.gray-800">Espace Éditeur</h2>
+      <h2 className="text-xl font-bold text-brand-gray-800">Espace Éditeur</h2>
       {error && <div className="text-red-600 text-sm">{error}</div>}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border rounded-lg shadow-sm p-4">
-          <div className="text-xs uppercase tracking-wide text-brand.gray-500">Soumis</div>
-          <div className="text-2xl font-bold text-brand.gray-800">{stats.submitted}</div>
+          <div className="text-xs uppercase tracking-wide text-brand-gray-500">Soumis</div>
+          <div className="text-2xl font-bold text-brand-gray-800">{stats.submitted}</div>
         </div>
         <div className="bg-white border rounded-lg shadow-sm p-4">
-          <div className="text-xs uppercase tracking-wide text-brand.gray-500">Acceptés</div>
-          <div className="text-2xl font-bold text-brand.gray-800">{stats.accepted}</div>
+          <div className="text-xs uppercase tracking-wide text-brand-gray-500">Acceptés</div>
+          <div className="text-2xl font-bold text-brand-gray-800">{stats.accepted}</div>
         </div>
         <div className="bg-white border rounded-lg shadow-sm p-4">
-          <div className="text-xs uppercase tracking-wide text-brand.gray-500">À publier</div>
-          <div className="text-2xl font-bold text-brand.gray-800">{stats.toPublish}</div>
+          <div className="text-xs uppercase tracking-wide text-brand-gray-500">À publier</div>
+          <div className="text-2xl font-bold text-brand-gray-800">{stats.toPublish}</div>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-brand.gray-500">Chargement…</div>
+        <div className="text-brand-gray-500">Chargement…</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <section>
-            <h3 className="text-lg font-semibold text-brand.gray-800 mb-2">Soumis</h3>
+            <h3 className="text-lg font-semibold text-brand-gray-800 mb-2">Soumis</h3>
             <ul className="space-y-3">
               {submitted.map(a => (
                 <li key={a.id} className="border p-4 rounded bg-white shadow-sm">
-                  <div className="font-semibold text-brand.gray-800">{a.title}</div>
-                  <div className="text-sm text-brand.gray-600">{a.authors}</div>
+                  <div className="font-semibold text-brand-gray-800">{a.title}</div>
+                  <div className="text-sm text-brand-gray-600">{a.authors}</div>
                   <div className="mt-2">
                     <textarea
                       placeholder="Note de révision (interne)"
@@ -92,7 +92,7 @@ export default function EditorDashboardPage() {
                           const body = { note: notes[a.id] || '' };
                           await fetch(`/api/reviews/${a.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                         }}
-                        className="px-3 py-1 rounded bg-brand.blue-600 text-white hover:bg-brand.blue-700"
+                        className="px-3 py-1 rounded bg-brand-blue-600 text-white hover:bg-brand-blue-700"
                       >
                         Enregistrer la note
                       </button>
@@ -102,14 +102,14 @@ export default function EditorDashboardPage() {
                           const data = await res.json();
                           setNotes(prev => ({ ...prev, [a.id]: data?.note?.note || '' }));
                         }}
-                        className="px-3 py-1 rounded bg-brand.gray-200 text-brand.gray-800 hover:bg-brand.gray-300"
+                        className="px-3 py-1 rounded bg-brand-gray-200 text-brand-gray-800 hover:bg-brand-gray-300"
                       >
                         Charger la note
                       </button>
                     </div>
                   </div>
                   <div className="mt-2 flex gap-2">
-                    <button onClick={() => updateStatus(a.id, 'ACCEPTED')} className="bg-brand.green-600 text-white px-3 py-1 rounded hover:bg-brand.green-700">Accepter</button>
+                    <button onClick={() => updateStatus(a.id, 'ACCEPTED')} className="bg-brand-green-600 text-white px-3 py-1 rounded hover:bg-brand-green-700">Accepter</button>
                     <button onClick={() => updateStatus(a.id, 'REJECTED')} className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Rejeter</button>
                   </div>
                 </li>
@@ -117,15 +117,15 @@ export default function EditorDashboardPage() {
             </ul>
           </section>
           <section>
-            <h3 className="text-lg font-semibold text-brand.gray-800 mb-2">Acceptés</h3>
+            <h3 className="text-lg font-semibold text-brand-gray-800 mb-2">Acceptés</h3>
             <ul className="space-y-3">
               {accepted.map(a => (
                 <li key={a.id} className="border p-4 rounded bg-white shadow-sm">
-                  <div className="font-semibold text-brand.gray-800">{a.title}</div>
-                  <div className="text-sm text-brand.gray-600">{a.authors}</div>
+                  <div className="font-semibold text-brand-gray-800">{a.title}</div>
+                  <div className="text-sm text-brand-gray-600">{a.authors}</div>
                   <div className="mt-2 flex gap-2">
-                    <button onClick={() => updateStatus(a.id, 'PUBLISHED')} className="bg-brand.blue-600 text-white px-3 py-1 rounded hover:bg-brand.blue-700">Publier</button>
-                    <a href={a.pdfUrl} className="text-brand.blue-600 underline">PDF</a>
+                    <button onClick={() => updateStatus(a.id, 'PUBLISHED')} className="bg-brand-blue-600 text-white px-3 py-1 rounded hover:bg-brand-blue-700">Publier</button>
+                    <a href={a.pdfUrl} className="text-brand-blue-600 underline">PDF</a>
                   </div>
                 </li>
               ))}

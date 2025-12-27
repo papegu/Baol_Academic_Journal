@@ -13,14 +13,14 @@ La revue met en avant les recherches en intelligence artificielle et modélisati
   return (
     <section className="space-y-8">
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-brand.gray-800">Bienvenue sur la plateforme Baol Academic Journal</h2>
-        <p className="text-brand.gray-700 whitespace-pre-line">
+        <h2 className="text-2xl font-semibold text-brand-gray-800">Bienvenue sur la plateforme Baol Academic Journal</h2>
+        <p className="text-brand-gray-700 whitespace-pre-line">
           {expanded ? introFull : introShort}
         </p>
         {!expanded && (
           <button
             onClick={() => setExpanded(true)}
-            className="text-brand.blue-600 underline"
+            className="text-brand-blue-600 underline"
           >
             Lire plus
           </button>

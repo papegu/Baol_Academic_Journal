@@ -33,7 +33,7 @@ export default function AdminPaymentPage() {
 
   return (
     <div className="max-w-xl mx-auto bg-white p-6 rounded shadow space-y-4">
-      <h2 className="text-2xl font-bold text-brand.gray-800">Paiement des frais de publication (Admin)</h2>
+      <h2 className="text-2xl font-bold text-brand-gray-800">Paiement des frais de publication (Admin)</h2>
       <div className="space-y-2">
         <label className="block text-sm font-medium">Montant (XOF)</label>
         <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} className="border px-3 py-2 rounded w-full" />
@@ -42,14 +42,14 @@ export default function AdminPaymentPage() {
         <label className="block text-sm font-medium">Description</label>
         <input type="text" value={description} onChange={e => setDescription(e.target.value)} className="border px-3 py-2 rounded w-full" />
       </div>
-      <button onClick={startPayment} disabled={loading} className="bg-brand.blue-600 text-white px-4 py-2 rounded">
+      <button onClick={startPayment} disabled={loading} className="bg-brand-blue-600 text-white px-4 py-2 rounded">
         {loading ? "Initialisation…" : "Générer un lien de paiement"}
       </button>
-      {msg && <p className="text-brand.gray-700">{msg}</p>}
+      {msg && <p className="text-brand-gray-700">{msg}</p>}
       {link && (
         <div className="space-y-2">
-          <p className="text-brand.gray-700">Lien de paiement généré :</p>
-          <a href={link} target="_blank" rel="noreferrer" className="text-brand.blue-600 underline">Payer maintenant</a>
+          <p className="text-brand-gray-700">Lien de paiement généré :</p>
+          <a href={link} target="_blank" rel="noreferrer" className="text-brand-blue-600 underline">Payer maintenant</a>
         </div>
       )}
     </div>

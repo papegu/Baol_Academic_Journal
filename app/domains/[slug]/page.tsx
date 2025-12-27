@@ -65,68 +65,68 @@ export default function DomainPage({ params }: { params: { slug: string } }) {
   return (
     <section className="space-y-6">
       <div className="bg-white rounded shadow p-6">
-        <h1 className="text-2xl font-bold text-brand.gray-800">{domain.title}</h1>
-        <p className="text-brand.gray-700 mt-2">{domain.lead}</p>
+        <h1 className="text-2xl font-bold text-brand-gray-800">{domain.title}</h1>
+        <p className="text-brand-gray-700 mt-2">{domain.lead}</p>
       </div>
 
       {domain.sections.map((s) => (
         <div key={s.heading} className="bg-white rounded shadow p-6">
-          <h2 className="text-lg font-semibold text-brand.gray-800">{s.heading}</h2>
-          <p className="text-brand.gray-700 mt-2">{s.text}</p>
+          <h2 className="text-lg font-semibold text-brand-gray-800">{s.heading}</h2>
+          <p className="text-brand-gray-700 mt-2">{s.text}</p>
         </div>
       ))}
 
       <div className="bg-white rounded shadow p-6">
-        <h2 className="text-lg font-semibold text-brand.gray-800">Editorial Board</h2>
-        <p className="text-brand.gray-700 mt-2">Exemple — mettre à jour avec les noms et affiliations réelles pour ce domaine.</p>
+        <h2 className="text-lg font-semibold text-brand-gray-800">Editorial Board</h2>
+        <p className="text-brand-gray-700 mt-2">Exemple — mettre à jour avec les noms et affiliations réelles pour ce domaine.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
           <div className="bg-white border rounded p-3">
             <div className="font-semibold">Dr. Exemple 1</div>
-            <div className="text-brand.gray-600 text-sm">Editor — Institution</div>
+            <div className="text-brand-gray-600 text-sm">Editor — Institution</div>
           </div>
           <div className="bg-white border rounded p-3">
             <div className="font-semibold">Dr. Exemple 2</div>
-            <div className="text-brand.gray-600 text-sm">Associate Editor — Institution</div>
+            <div className="text-brand-gray-600 text-sm">Associate Editor — Institution</div>
           </div>
           <div className="bg-white border rounded p-3">
             <div className="font-semibold">Dr. Exemple 3</div>
-            <div className="text-brand.gray-600 text-sm">Board Member — Institution</div>
+            <div className="text-brand-gray-600 text-sm">Board Member — Institution</div>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded shadow p-6">
-        <h2 className="text-lg font-semibold text-brand.gray-800">Current Issue</h2>
+        <h2 className="text-lg font-semibold text-brand-gray-800">Current Issue</h2>
         <div className="space-y-3 mt-3">
           <article className="border rounded p-3">
             <div className="font-semibold">Titre d'article — exemple</div>
-            <div className="text-brand.gray-600 text-sm">Auteurs — DOI: à venir</div>
-            <p className="text-brand.gray-600 text-sm mt-1">Résumé court…</p>
+            <div className="text-brand-gray-600 text-sm">Auteurs — DOI: à venir</div>
+            <p className="text-brand-gray-600 text-sm mt-1">Résumé court…</p>
           </article>
         </div>
       </div>
 
       <div className="bg-white rounded shadow p-6">
-        <h2 className="text-lg font-semibold text-brand.gray-800">Archives</h2>
-        <ul className="list-disc pl-6 text-brand.gray-700 mt-2">
+        <h2 className="text-lg font-semibold text-brand-gray-800">Archives</h2>
+        <ul className="list-disc pl-6 text-brand-gray-700 mt-2">
           <li>Vol 1, Issue 1 (2025) — inaugural issue</li>
         </ul>
       </div>
 
       <div className="bg-white rounded shadow p-6">
-        <h2 className="text-lg font-semibold text-brand.gray-800">Submissions</h2>
-        <p className="text-brand.gray-700">Préparez le manuscrit avec les templates et soumettez via la plateforme.</p>
+        <h2 className="text-lg font-semibold text-brand-gray-800">Submissions</h2>
+        <p className="text-brand-gray-700">Préparez le manuscrit avec les templates et soumettez via la plateforme.</p>
         <div className="mt-2 flex gap-3">
-          <a className="text-brand.blue-600 underline" href="/template_word.doc" download>Template Word (.doc)</a>
-          <a className="text-brand.blue-600 underline" href="/template_word.tex" download>Template LaTeX (.tex)</a>
-          <a className="text-brand.blue-600 underline" href="/submit">Soumettre</a>
+          <a className="text-brand-blue-600 underline" href="/template_word.doc" download>Template Word (.doc)</a>
+          <a className="text-brand-blue-600 underline" href="/template_word.tex" download>Template LaTeX (.tex)</a>
+          <a className="text-brand-blue-600 underline" href="/submit">Soumettre</a>
         </div>
       </div>
 
       <div className="bg-white rounded shadow p-6">
-        <h2 className="text-lg font-semibold text-brand.gray-800">Contact</h2>
-        <p className="text-brand.gray-700">Rédaction — BAJP</p>
-        <p className="text-brand.gray-700">Email: editorial@bajp.org</p>
+        <h2 className="text-lg font-semibold text-brand-gray-800">Contact</h2>
+        <p className="text-brand-gray-700">Rédaction — BAJP</p>
+        <p className="text-brand-gray-700">Email: editorial@bajp.org</p>
       </div>
     </section>
   );

@@ -59,10 +59,10 @@ export default function HomeDomains() {
       {DOMAINS.map((d) => (
         <div key={d.slug} className="mx-auto w-[70%] h-[250px] border rounded-lg bg-white shadow-sm p-6 flex flex-col justify-between">
           <div>
-            <h3 className="text-xl font-bold text-brand.gray-800">{d.title}</h3>
-            <p className="text-brand.gray-700 mt-2">{d.issn}</p>
-            <p className="text-brand.gray-700">{d.indexing}</p>
-            <p className="text-brand.gray-700 mt-2">Sujet: {d.subject}</p>
+            <h3 className="text-xl font-bold text-brand-gray-800">{d.title}</h3>
+            <p className="text-brand-gray-700 mt-2">{d.issn}</p>
+            <p className="text-brand-gray-700">{d.indexing}</p>
+            <p className="text-brand-gray-700 mt-2">Sujet: {d.subject}</p>
           </div>
           <div className="flex justify-end">
             <Link href={`/domains/${d.slug}`} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded hover:bg-blue-700">View Journal</Link>

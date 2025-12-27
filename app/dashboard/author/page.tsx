@@ -20,16 +20,16 @@ export default function AuthorDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-brand.gray-800">Aperçu du compte</h2>
+      <h2 className="text-xl font-bold text-brand-gray-800">Aperçu du compte</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Soumis" value={submitted} />
         <StatCard label="Acceptés" value={accepted} />
         <StatCard label="Publiés" value={published} />
       </div>
 
-      <h3 className="text-lg font-semibold text-brand.gray-800">Mes articles</h3>
+      <h3 className="text-lg font-semibold text-brand-gray-800">Mes articles</h3>
       {loading ? (
-        <div className="text-brand.gray-500">Chargement…</div>
+        <div className="text-brand-gray-500">Chargement…</div>
       ) : (
         <ArticleList articles={articles} />
       )}
@@ -53,7 +53,7 @@ export default function AuthorDashboardPage() {
           }}
           disabled={accepted === 0}
         />
-        <div className="text-xs text-brand.gray-500 mt-2">Le paiement est requis pour les articles acceptés avant publication.</div>
+        <div className="text-xs text-brand-gray-500 mt-2">Le paiement est requis pour les articles acceptés avant publication.</div>
       </div>
     </div>
   );

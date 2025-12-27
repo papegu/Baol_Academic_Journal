@@ -19,7 +19,7 @@ export default function Header() {
           </div>
         </Link>
         <div className="ml-auto flex items-center gap-3 text-sm">
-          <Link className="text-brand.gray-700 hover:text-brand.blue-700 font-medium" href="/">Accueil</Link>
+          <Link className="text-brand-gray-700 hover:text-brand-blue-700 font-medium" href="/">Accueil</Link>
           <div className="relative">
             <button
               onClick={() => setOpen((v) => !v)}

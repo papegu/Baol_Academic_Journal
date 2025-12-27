@@ -56,16 +56,16 @@ export default function SubmitArticlePage() {
     return (
       <div className="max-w-lg mx-auto bg-white p-8 rounded shadow">
         <h2 className="text-xl font-bold mb-4">Soumettre un article</h2>
-        <p className="text-brand.gray-700 mb-2">Redirection vers la page de connexion…</p>
+        <p className="text-brand-gray-700 mb-2">Redirection vers la page de connexion…</p>
         <div className="flex gap-3 mb-4">
-          <a className="text-brand.blue-600 underline" href="/login">Connexion</a>
-          <a className="text-brand.blue-600 underline" href="/register">Inscription</a>
+          <a className="text-brand-blue-600 underline" href="/login">Connexion</a>
+          <a className="text-brand-blue-600 underline" href="/register">Inscription</a>
         </div>
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-brand.gray-800">Templates</h3>
-          <ul className="list-disc pl-6 text-brand.gray-700 space-y-1">
-            <li><a className="text-brand.blue-600 underline" href="/template_word.doc" download>Template Word (.doc)</a></li>
-            <li><a className="text-brand.blue-600 underline" href="/template_word.tex" download>Template LaTeX (.tex)</a></li>
+          <h3 className="text-lg font-semibold text-brand-gray-800">Templates</h3>
+          <ul className="list-disc pl-6 text-brand-gray-700 space-y-1">
+            <li><a className="text-brand-blue-600 underline" href="/template_word.doc" download>Template Word (.doc)</a></li>
+            <li><a className="text-brand-blue-600 underline" href="/template_word.tex" download>Template LaTeX (.tex)</a></li>
           </ul>
         </div>
       </div>
@@ -84,10 +84,10 @@ export default function SubmitArticlePage() {
         <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Soumettre</button>
       </form>
       <div className="mt-4 space-y-2">
-        <h3 className="text-lg font-semibold text-brand.gray-800">Templates</h3>
-        <ul className="list-disc pl-6 text-brand.gray-700 space-y-1">
-          <li><a className="text-brand.blue-600 underline" href="/template_word.doc" download>Template Word (.doc)</a></li>
-          <li><a className="text-brand.blue-600 underline" href="/template_word.tex" download>Template LaTeX (.tex)</a></li>
+        <h3 className="text-lg font-semibold text-brand-gray-800">Templates</h3>
+        <ul className="list-disc pl-6 text-brand-gray-700 space-y-1">
+          <li><a className="text-brand-blue-600 underline" href="/template_word.doc" download>Template Word (.doc)</a></li>
+          <li><a className="text-brand-blue-600 underline" href="/template_word.tex" download>Template LaTeX (.tex)</a></li>
         </ul>
       </div>
     </div>
