@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({ user, role, access_token });
   // Set a role cookie for middleware guards
     res.cookies.set('role', role, { path: '/', httpOnly: false });
+    if (user?.email) res.cookies.set('user_email', user.email, { path: '/', httpOnly: false });
     return res;
   } catch (err: any) {
     return NextResponse.json({ message: err?.message || 'Identifiants invalides' }, { status: 401 });
