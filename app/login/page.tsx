@@ -54,10 +54,19 @@ export default function LoginPage() {
         )}
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full border px-3 py-2 rounded" />
-        <input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} required className="w-full border px-3 py-2 rounded" />
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-brand-gray-800">Email</label>
+          <input id="email" type="email" autoComplete="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full border px-3 py-2 rounded" />
+        </div>
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-brand-gray-800">Mot de passe</label>
+          <input id="password" type="password" autoComplete="current-password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} required className="w-full border px-3 py-2 rounded" />
+        </div>
         {error && <div className="text-red-600 text-sm">{error}</div>}
         <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Se connecter</button>
+        <div className="text-sm mt-2">
+          Pas de compte ? <a href="/register" className="text-brand-blue-600 underline">S'inscrire</a>
+        </div>
       </form>
     </div>
   );
