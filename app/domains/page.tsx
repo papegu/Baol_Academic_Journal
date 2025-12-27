@@ -1,4 +1,4 @@
-import DomainsSection from '@/components/DomainsSection';
+import DomainsSection from '../../components/DomainsSection';
 
 export default function DomainsPage() {
   return (

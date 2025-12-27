@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getReviewNote, setReviewNote } from '@/backend/reviews';
+import { getReviewNote, setReviewNote } from '../../../backend/reviews';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const id = Number(params.id);

@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from 'react';
-import StatCard from '@/components/StatCard';
-import ArticleList from '@/components/ArticleList';
-import PaymentButton from '@/components/PaymentButton';
+import StatCard from '../../../components/StatCard';
+import ArticleList from '../../../components/ArticleList';
+import PaymentButton from '../../../components/PaymentButton';
 
 export default function AuthorDashboardPage() {
   const [articles, setArticles] = useState<any[]>([]);
