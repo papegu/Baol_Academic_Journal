@@ -52,6 +52,20 @@ export default function SubmitArticlePage() {
     }
   };
 
+  const handleLogout = () => {
+    // Clear role cookie and any known tokens
+    document.cookie = 'role=; Max-Age=0; path=/';
+    document.cookie = 'access_token=; Max-Age=0; path=/';
+    document.cookie = 'refresh_token=; Max-Age=0; path=/';
+    try {
+      localStorage.removeItem('role');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+    } catch {}
+    setAuthenticated(false);
+    router.push('/login');
+  };
+
   if (authenticated === false) {
     return (
       <div className="max-w-lg mx-auto bg-white p-8 rounded shadow">
@@ -74,7 +88,16 @@ export default function SubmitArticlePage() {
 
   return (
     <div className="max-w-lg mx-auto bg-white p-8 rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Soumettre un article</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">Soumettre un article</h2>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800"
+        >
+          Déconnexion
+        </button>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input type="text" placeholder="Titre" value={title} onChange={e => setTitle(e.target.value)} required className="w-full border px-3 py-2 rounded" />
         <input type="text" placeholder="Auteurs" value={authors} onChange={e => setAuthors(e.target.value)} required className="w-full border px-3 py-2 rounded" />
