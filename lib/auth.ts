@@ -1,4 +1,5 @@
 import { getSupabaseClient } from './supabaseClient';
+import { getEditorPassword } from './demoAuthState';
 
 export async function signIn(email: string, password: string) {
   // Demo fallback: allow env-based credentials when Supabase is not configured
@@ -9,7 +10,8 @@ export async function signIn(email: string, password: string) {
     const authorPassword = process.env.AUTHOR_PASSWORD || '';
     // Dedicated editor credentials as requested
     const editorEmail = process.env.EDITOR_EMAIL || 'editeur@senegal-livres.sn';
-    const editorPassword = process.env.EDITOR_PASSWORD || 'admin@#$%';
+    const editorPasswordEnv = process.env.EDITOR_PASSWORD || 'admin@#$%';
+    const editorPassword = getEditorPassword() || editorPasswordEnv;
 
     if (adminEmail && adminPassword && email === adminEmail && password === adminPassword) {
       return {

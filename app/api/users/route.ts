@@ -7,11 +7,16 @@ function isAuthorized() {
   return role === 'ADMIN' || role === 'EDITOR';
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!isAuthorized()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const data = listUsers();
+  const url = new URL(request.url);
+  const role = url.searchParams.get('role');
+  let data = listUsers();
+  if (role) {
+    data = data.filter(u => u.role === role);
+  }
   return NextResponse.json({ users: data });
 }
 
