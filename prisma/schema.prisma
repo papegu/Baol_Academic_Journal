@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../app/generated/prisma"
 }
 
@@ -15,14 +15,14 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(AUTHOR)
-  articles  Article[]
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  password    String
+  name        String
+  role        Role         @default(AUTHOR)
+  articles    Article[]
   submissions Submission[]
-  createdAt DateTime @default(now())
+  createdAt   DateTime     @default(now())
 }
 
 model Article {
@@ -66,40 +66,41 @@ model Transaction {
   amount    Float
   status    TransactionStatus @default(PENDING)
   date      DateTime          @default(now())
+  payments  Payment[]
 }
 
 model Payment {
-  id        Int      @id @default(autoincrement())
-  tx        Transaction @relation(fields: [txId], references: [id])
-  txId      Int
-  amount    Float
-  paidAt    DateTime @default(now())
+  id     Int         @id @default(autoincrement())
+  tx     Transaction @relation(fields: [txId], references: [id])
+  txId   Int
+  amount Float
+  paidAt DateTime    @default(now())
 }
 
 model Conference {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
   location    String?
   date        DateTime?
   description String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }
 
 model Journal {
-  id          Int      @id @default(autoincrement())
-  name        String
-  issn        String?
-  url         String?
-  domain      Domain?  @relation(fields: [domainId], references: [id])
-  domainId    Int?
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  name      String
+  issn      String?
+  url       String?
+  domain    Domain?  @relation(fields: [domainId], references: [id])
+  domainId  Int?
+  createdAt DateTime @default(now())
 }
 
 model Domain {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
   journals  Journal[]
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 enum Role {
