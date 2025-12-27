@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { updateUser, deleteUser } from '../../../../lib/users';
 import { prisma } from '../../../../lib/prisma';
+import crypto from 'crypto';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -22,7 +23,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ user: updated });
   }
-  const user = await prisma.user.update({ where: { id }, data: patch });
+  const data = { ...patch } as any;
+  if (typeof data.password === 'string' && data.password.length > 0) {
+    data.password = crypto.createHash('sha256').update(String(data.password), 'utf8').digest('hex');
+  }
+  const user = await prisma.user.update({ where: { id }, data });
   return NextResponse.json({ user });
 }
 

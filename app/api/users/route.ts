@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { listUsers, createUser, User } from '../../../lib/users';
 import { prisma } from '../../../lib/prisma';
+import crypto from 'crypto';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -28,14 +29,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const body = await request.json();
-  const { email, name, role } = body as Partial<User>;
-  if (!email || !name || !role) {
+  const { email, name, role, password } = body as Partial<User & { password: string }>;
+  if (!email || !name || !role || !password) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
   }
   if (process.env.DEMO_AUTH === 'true') {
     const created = createUser({ email, name, role });
     return NextResponse.json({ user: created }, { status: 201 });
   }
-  const user = await prisma.user.create({ data: { email, name, role: role as any, password: '' } });
+  const hashed = crypto.createHash('sha256').update(String(password), 'utf8').digest('hex');
+  const user = await prisma.user.create({ data: { email, name, role: role as any, password: hashed } });
   return NextResponse.json({ user }, { status: 201 });
 }
