@@ -180,13 +180,15 @@ export default function AdminPage() {
               const form = e.currentTarget as HTMLFormElement;
               const name = (form.elements.namedItem('name') as HTMLInputElement).value;
               const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-              const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, role: 'AUTHOR' }) });
-              if (res.ok) { fetchAuthors(); (form.elements.namedItem('name') as HTMLInputElement).value = ''; (form.elements.namedItem('email') as HTMLInputElement).value=''; }
+              const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+              const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, role: 'AUTHOR', password }) });
+              if (res.ok) { fetchAuthors(); (form.elements.namedItem('name') as HTMLInputElement).value = ''; (form.elements.namedItem('email') as HTMLInputElement).value=''; (form.elements.namedItem('password') as HTMLInputElement).value=''; }
             }}
             className="space-y-2 mb-3"
           >
             <input name="name" placeholder="Nom" className="w-full border px-3 py-2 rounded" />
             <input name="email" placeholder="Email" className="w-full border px-3 py-2 rounded" />
+            <input name="password" type="password" placeholder="Mot de passe" className="w-full border px-3 py-2 rounded" />
             <button className="bg-brand-blue-600 text-white px-3 py-1 rounded">Ajouter</button>
           </form>
           <ul className="space-y-2">
