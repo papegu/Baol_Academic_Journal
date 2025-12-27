@@ -7,6 +7,9 @@ export default function AdminPage() {
   const [authors, setAuthors] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [conferences, setConferences] = useState<any[]>([]);
+  const [journals, setJournals] = useState<any[]>([]);
+  const [domains, setDomains] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -56,11 +59,38 @@ export default function AdminPage() {
     } catch {}
   };
 
+  const fetchConferences = async () => {
+    try {
+      const res = await fetch('/api/conferences');
+      const data = await res.json();
+      setConferences(data.conferences || []);
+    } catch {}
+  };
+
+  const fetchJournals = async () => {
+    try {
+      const res = await fetch('/api/journals');
+      const data = await res.json();
+      setJournals(data.journals || []);
+    } catch {}
+  };
+
+  const fetchDomains = async () => {
+    try {
+      const res = await fetch('/api/domains');
+      const data = await res.json();
+      setDomains(data.domains || []);
+    } catch {}
+  };
+
   useEffect(() => {
     fetchArticles();
     fetchAuthors();
     fetchBooks();
     fetchTransactions();
+    fetchConferences();
+    fetchJournals();
+    fetchDomains();
   }, []);
 
   const updateStatus = async (id: number, status: string) => {
@@ -273,6 +303,111 @@ export default function AdminPage() {
             }}
           >Actualiser</button>
           <p className="text-sm text-brand-gray-600">Liste accessible via `/api/payments`.</p>
+        </section>
+
+        <section className="bg-white border rounded-lg shadow-sm p-4">
+          <h3 className="text-lg font-semibold text-brand-gray-800 mb-3">Conférences</h3>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.currentTarget as HTMLFormElement;
+            const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+            const location = (form.elements.namedItem('location') as HTMLInputElement).value;
+            const date = (form.elements.namedItem('date') as HTMLInputElement).value;
+            const description = (form.elements.namedItem('description') as HTMLInputElement).value;
+            const res = await fetch('/api/conferences', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, location, date, description }) });
+            if (res.ok) { fetchConferences(); (form.reset?.call(form)); }
+          }} className="space-y-2 mb-3">
+            <input name="name" placeholder="Nom" className="w-full border px-3 py-2 rounded" />
+            <input name="location" placeholder="Lieu" className="w-full border px-3 py-2 rounded" />
+            <input name="date" placeholder="Date (ISO)" className="w-full border px-3 py-2 rounded" />
+            <input name="description" placeholder="Description" className="w-full border px-3 py-2 rounded" />
+            <button className="bg-brand-blue-600 text-white px-3 py-1 rounded">Ajouter</button>
+          </form>
+          <ul className="space-y-2">
+            {conferences.map((c: any) => (
+              <li key={c.id} className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">{c.name}</div>
+                  <div className="text-sm text-brand-gray-600">{c.location} {c.date}</div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
+                    const name = prompt('Nouveau nom', c.name) || c.name;
+                    await fetch(`/api/conferences/${c.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                    fetchConferences();
+                  }}>Modifier</button>
+                  <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/conferences/${c.id}`, { method: 'DELETE' }); fetchConferences(); }}>Supprimer</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="bg-white border rounded-lg shadow-sm p-4">
+          <h3 className="text-lg font-semibold text-brand-gray-800 mb-3">Journaux</h3>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.currentTarget as HTMLFormElement;
+            const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+            const issn = (form.elements.namedItem('issn') as HTMLInputElement).value;
+            const url = (form.elements.namedItem('url') as HTMLInputElement).value;
+            const domain = (form.elements.namedItem('domain') as HTMLInputElement).value;
+            const res = await fetch('/api/journals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, issn, url, domain }) });
+            if (res.ok) { fetchJournals(); (form.reset?.call(form)); }
+          }} className="space-y-2 mb-3">
+            <input name="name" placeholder="Nom" className="w-full border px-3 py-2 rounded" />
+            <input name="issn" placeholder="ISSN" className="w-full border px-3 py-2 rounded" />
+            <input name="url" placeholder="URL" className="w-full border px-3 py-2 rounded" />
+            <input name="domain" placeholder="Domaine" className="w-full border px-3 py-2 rounded" />
+            <button className="bg-brand-blue-600 text-white px-3 py-1 rounded">Ajouter</button>
+          </form>
+          <ul className="space-y-2">
+            {journals.map((j: any) => (
+              <li key={j.id} className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">{j.name}</div>
+                  <div className="text-sm text-brand-gray-600">{j.issn} {j.url}</div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
+                    const name = prompt('Nouveau nom', j.name) || j.name;
+                    await fetch(`/api/journals/${j.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                    fetchJournals();
+                  }}>Modifier</button>
+                  <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/journals/${j.id}`, { method: 'DELETE' }); fetchJournals(); }}>Supprimer</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="bg-white border rounded-lg shadow-sm p-4">
+          <h3 className="text-lg font-semibold text-brand-gray-800 mb-3">Domaines</h3>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.currentTarget as HTMLFormElement;
+            const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+            const res = await fetch('/api/domains', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+            if (res.ok) { fetchDomains(); (form.reset?.call(form)); }
+          }} className="space-y-2 mb-3">
+            <input name="name" placeholder="Nom" className="w-full border px-3 py-2 rounded" />
+            <button className="bg-brand-blue-600 text-white px-3 py-1 rounded">Ajouter</button>
+          </form>
+          <ul className="space-y-2">
+            {domains.map((d: any) => (
+              <li key={d.id} className="flex items-center justify-between">
+                <div className="font-medium">{d.name}</div>
+                <div className="flex gap-2">
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
+                    const name = prompt('Nouveau nom', d.name) || d.name;
+                    await fetch(`/api/domains/${d.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                    fetchDomains();
+                  }}>Modifier</button>
+                  <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/domains/${d.id}`, { method: 'DELETE' }); fetchDomains(); }}>Supprimer</button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       </div>
 
