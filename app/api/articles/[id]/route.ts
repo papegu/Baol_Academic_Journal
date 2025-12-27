@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getArticleById } from '@/backend/articles';
+import { getArticleById } from '../../../../backend/articles';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const id = Number(params.id);

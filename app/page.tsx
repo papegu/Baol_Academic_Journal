@@ -1,7 +1,6 @@
 "use client";
 import Link from 'next/link';
-import DomainsSection from '@/components/DomainsSection';
-import HomeDomains from '@/components/HomeDomains';
+import HomeDomains from '../components/HomeDomains';
 import { useState } from 'react';
 
 export default function Home() {
