@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { signUp } from '@/lib/auth';
+import { signUp } from '../../../../lib/auth';
 
 export async function POST(req: NextRequest) {
   const { name, email, password } = await req.json();

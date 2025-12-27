@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { buildPaymentUrl } from '@/lib/payments';
+import { buildPaymentUrl } from '../../../../lib/payments';
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
