@@ -1,28 +1,3 @@
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: 'AUTHOR' | 'ADMIN';
-}
-
-let users: User[] = [
-  { id: 1, name: 'Admin', email: 'admin@example.com', role: 'ADMIN' }
-];
-
-export async function register(name: string, email: string, password: string): Promise<{ ok: boolean; message?: string; user?: User }> {
-  if (users.find(u => u.email === email)) return { ok: false, message: 'Email déjà utilisé' };
-  const id = Math.max(0, ...users.map(u => u.id)) + 1;
-  const user: User = { id, name, email, role: 'AUTHOR' };
-  users.push(user);
-  return { ok: true, user };
-}
-
-export async function login(email: string, password: string): Promise<{ ok: boolean; message?: string; token?: string; user?: User }> {
-  const user = users.find(u => u.email === email);
-  if (!user) return { ok: false, message: 'Utilisateur introuvable' };
-  const token = 'mock-token';
-  return { ok: true, token, user };
-}
 export type User = {
   id: number;
   name: string;
