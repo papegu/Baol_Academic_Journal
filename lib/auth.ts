@@ -1,5 +1,6 @@
 import { getEditorPassword } from './demoAuthState';
 import { prisma } from './prisma';
+import { getSupabaseClient } from './supabaseClient';
 import crypto from 'crypto';
 
 function hashPassword(pw: string) {
@@ -41,13 +42,25 @@ export async function signIn(email: string, password: string) {
     }
     throw new Error('Identifiants invalides');
   }
-  // Always authenticate against Prisma `User` table (Supabase DB)
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) throw new Error('Identifiants invalides');
-  const ok = user.password && user.password.length > 0 ? user.password === hashPassword(password) : false;
-  if (!ok) throw new Error('Identifiants invalides');
-  const role = user.role as any;
-  return { user: { email: user.email, user_metadata: { name: user.name, role } } as any, role, access_token: 'prisma-auth' };
+  // Production path: authenticate via Supabase Auth, then verify/create user in Prisma `User` table
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error || !data?.session) {
+    throw new Error(error?.message || 'Identifiants invalides');
+  }
+  // Ensure user exists in Prisma `User` table (Supabase Postgres)
+  let dbUser = await prisma.user.findUnique({ where: { email } });
+  if (!dbUser) {
+    const displayName = data.user?.user_metadata?.name || email.split('@')[0];
+    // Critical: store placeholder password when using Supabase Auth; we no longer check DB password
+    dbUser = await prisma.user.create({ data: { email, name: displayName, role: 'AUTHOR' as any, password: '' } });
+  }
+  const role = dbUser.role as any;
+  return {
+    user: { email: dbUser.email, user_metadata: { name: dbUser.name, role } } as any,
+    role,
+    access_token: data.session.access_token,
+  };
 }
 
 export async function signUp(name: string, email: string, password: string) {
@@ -55,9 +68,14 @@ export async function signUp(name: string, email: string, password: string) {
   if (process.env.DEMO_AUTH === 'true') {
     return { user: { email, user_metadata: { name } } as any };
   }
-  // Always register in Prisma `User` table
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) throw new Error('Email déjà utilisé');
-  const user = await prisma.user.create({ data: { email, name, password: hashPassword(password), role: 'AUTHOR' as any } });
-  return { user: { email: user.email, user_metadata: { name: user.name } } as any };
+  // Production path: trigger Supabase Auth email confirmation on sign-up.
+  // We do NOT create a Prisma `User` yet; user record will be ensured on first confirmed login.
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    // Optional: Supabase will send a confirmation email; redirect is configured in Supabase settings.
+  });
+  if (error) throw new Error(error.message || "Erreur lors de l'inscription");
+  return { user: { email, user_metadata: { name } } as any };
 }
