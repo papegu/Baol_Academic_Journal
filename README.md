@@ -42,3 +42,9 @@ Notes
 
 Development
 - TypeScript: with `moduleResolution` set to `bundler`, explicit type packages are included via `types` in [tsconfig.json](tsconfig.json). This project sets `types: ["node", "nodemailer"]` to resolve `nodemailer` typings. Ensure `@types/nodemailer` is installed (present in dependencies).
+
+Supabase (Production)
+- Configurez les variables sur Vercel (Production): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL`, `SETUP_TOKEN`.
+- Ne commitez pas de secrets dans `.env.production` pour la production; préférez le panneau Vercel.
+- Créez l’admin (une seule fois) via `POST /api/bootstrap/admin` avec l’en-tête `x-setup-token`.
+- La connexion utilise Supabase Auth; le rôle Prisma est aligné sur `user_metadata.role` lors de la première connexion.
