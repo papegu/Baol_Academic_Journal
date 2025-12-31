@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '../../../lib/prisma';
+import { getPrisma } from '../../../lib/prisma';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -9,7 +9,7 @@ function isAuthorized() {
 
 export async function GET() {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const subs = await prisma.submission.findMany();
+  const subs = await getPrisma().submission.findMany({ orderBy: { createdAt: 'desc' } });
   return NextResponse.json({ submissions: subs });
 }
 
@@ -18,6 +18,6 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { title, authors, abstract, pdfUrl, userId } = body as any;
   if (!title || !authors || !abstract || !userId) return NextResponse.json({ error: 'Champs manquants' }, { status: 400 });
-  const sub = await prisma.submission.create({ data: { title, authors, abstract, pdfUrl, userId } });
+  const sub = await getPrisma().submission.create({ data: { title, authors, abstract, pdfUrl, userId } });
   return NextResponse.json({ submission: sub }, { status: 201 });
 }

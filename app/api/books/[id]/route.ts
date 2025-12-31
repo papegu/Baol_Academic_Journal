@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { updateBook, deleteBook } from '../../../../lib/books';
-import { prisma } from '../../../../lib/prisma';
+import { getPrisma } from '../../../../lib/prisma';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -18,7 +18,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ book: updated });
   }
-  const book = await prisma.book.update({ where: { id }, data: patch });
+  const book = await getPrisma().book.update({ where: { id }, data: patch });
   return NextResponse.json({ book });
 }
 
@@ -31,6 +31,6 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
     if (!ok) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   }
-  await prisma.book.delete({ where: { id } });
+  await getPrisma().book.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

@@ -1,5 +1,5 @@
 import { getEditorPassword } from './demoAuthState';
-import { prisma } from './prisma';
+import { getPrisma } from './prisma';
 import { getSupabaseClient } from './supabaseClient';
 import crypto from 'crypto';
 
@@ -49,14 +49,14 @@ export async function signIn(email: string, password: string) {
     throw new Error(error?.message || 'Identifiants invalides');
   }
   // Ensure user exists in Prisma `User` table (Supabase Postgres)
-  let dbUser = await prisma.user.findUnique({ where: { email } });
+  let dbUser = await getPrisma().user.findUnique({ where: { email } });
   if (!dbUser) {
     const displayName = data.user?.user_metadata?.name || email.split('@')[0];
     // Set initial role from Supabase user metadata if provided; default to AUTHOR
     const metaRole = (data.user?.user_metadata as any)?.role;
     const initialRole = metaRole === 'ADMIN' || metaRole === 'EDITOR' || metaRole === 'AUTHOR' ? metaRole : 'AUTHOR';
     // Critical: store placeholder password when using Supabase Auth; we no longer check DB password
-    dbUser = await prisma.user.create({ data: { email, name: displayName, role: initialRole as any, password: '' } });
+    dbUser = await getPrisma().user.create({ data: { email, name: displayName, role: initialRole as any, password: '' } });
   }
   const role = dbUser.role as any;
   return {

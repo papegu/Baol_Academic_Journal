@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { updateUser, deleteUser } from '../../../../lib/users';
-import { prisma } from '../../../../lib/prisma';
+import { getPrisma } from '../../../../lib/prisma';
 import crypto from 'crypto';
 
 function isAuthorized() {
@@ -27,7 +27,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (typeof data.password === 'string' && data.password.length > 0) {
     data.password = crypto.createHash('sha256').update(String(data.password), 'utf8').digest('hex');
   }
-  const user = await prisma.user.update({ where: { id }, data });
+  const user = await getPrisma().user.update({ where: { id }, data });
   return NextResponse.json({ user });
 }
 
@@ -44,6 +44,6 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
     if (!ok) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   }
-  await prisma.user.delete({ where: { id } });
+  await getPrisma().user.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

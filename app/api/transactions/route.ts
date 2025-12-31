@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { listTransactions, createTransaction, Transaction } from '../../../lib/transactions';
-import { prisma } from '../../../lib/prisma';
+import { getPrisma } from '../../../lib/prisma';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -11,7 +11,7 @@ function isAuthorized() {
 export async function GET() {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (process.env.DEMO_AUTH === 'true') return NextResponse.json({ transactions: listTransactions() });
-  const transactions = await prisma.transaction.findMany();
+  const transactions = await getPrisma().transaction.findMany({ orderBy: { date: 'desc' } });
   return NextResponse.json({ transactions });
 }
 
@@ -26,6 +26,6 @@ export async function POST(request: Request) {
     const created = createTransaction({ reference, amount, status, date: date || new Date().toISOString() });
     return NextResponse.json({ transaction: created }, { status: 201 });
   }
-  const transaction = await prisma.transaction.create({ data: { reference, amount, status: status as any, date: date ? new Date(date) : undefined } });
+  const transaction = await getPrisma().transaction.create({ data: { reference, amount, status: status as any, date: date ? new Date(date) : undefined } });
   return NextResponse.json({ transaction }, { status: 201 });
 }

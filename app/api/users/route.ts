@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { listUsers, createUser, User } from '../../../lib/users';
-import { prisma } from '../../../lib/prisma';
+import { getPrisma } from '../../../lib/prisma';
 import crypto from 'crypto';
 
 function isAuthorized() {
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     if (role) data = data.filter(u => u.role === role);
     return NextResponse.json({ users: data });
   }
-  const users = await prisma.user.findMany({ where: role ? { role: role as any } : undefined });
+  const users = await getPrisma().user.findMany({ where: role ? { role: role as any } : undefined });
   return NextResponse.json({ users });
 }
 
@@ -38,6 +38,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ user: created }, { status: 201 });
   }
   const hashed = crypto.createHash('sha256').update(String(password), 'utf8').digest('hex');
-  const user = await prisma.user.create({ data: { email, name, role: role as any, password: hashed } });
+  const user = await getPrisma().user.create({ data: { email, name, role: role as any, password: hashed } });
   return NextResponse.json({ user }, { status: 201 });
 }

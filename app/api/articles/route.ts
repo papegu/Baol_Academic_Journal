@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '../../../lib/prisma';
+import { getPrisma } from '../../../lib/prisma';
 import { getSupabaseAdmin } from '../../../lib/supabaseAdmin';
 import crypto from 'crypto';
 
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const statusParam = searchParams.get('status');
   const where = statusParam ? { status: statusParam as any } : { status: 'PUBLISHED' as any };
-  const articles = await prisma.article.findMany({ where, orderBy: { createdAt: 'desc' } });
+  const articles = await getPrisma().article.findMany({ where, orderBy: { createdAt: 'desc' } });
   return NextResponse.json({ articles });
 }
 
@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest) {
 
   // If reject: remove storage object then delete DB record
   if (status === 'REJECTED') {
-    const existing = await prisma.article.findUnique({ where: { id: articleId } });
+    const existing = await getPrisma().article.findUnique({ where: { id: articleId } });
     if (!existing) return NextResponse.json({ message: 'Article introuvable' }, { status: 404 });
     try {
       const client = getSupabaseAdmin();
@@ -35,11 +35,11 @@ export async function PATCH(req: NextRequest) {
         await client.storage.from('articles').remove([path]);
       }
     } catch {}
-    await prisma.article.delete({ where: { id: articleId } });
+    await getPrisma().article.delete({ where: { id: articleId } });
     return NextResponse.json({ message: 'Soumission rejetée et supprimée' });
   }
 
-  const updated = await prisma.article.update({ where: { id: articleId }, data: { status } });
+  const updated = await getPrisma().article.update({ where: { id: articleId }, data: { status } });
   return NextResponse.json({ message: 'Statut mis à jour', article: updated });
 }
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
   // Resolve user from cookie
   const email = cookies().get('user_email')?.value || '';
-  const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
+  const user = email ? await getPrisma().user.findUnique({ where: { email } }) : null;
   if (!user) return NextResponse.json({ message: "Utilisateur non authentifié" }, { status: 401 });
 
   // Upload PDF to Supabase Storage
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
   const pdfUrl = publicUrlResult?.data?.publicUrl || '';
 
   // Create Article with status SUBMITTED
-  const created = await prisma.article.create({
+  const created = await getPrisma().article.create({
     data: { title, authors, abstract, pdfUrl, status: 'SUBMITTED' as any, userId: user.id }
   });
   return NextResponse.json({ message: 'Soumission reçue', article: created }, { status: 201 });

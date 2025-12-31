@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { listBooks, createBook, Book } from '../../../lib/books';
-import { prisma } from '../../../lib/prisma';
+import { getPrisma } from '../../../lib/prisma';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -11,7 +11,7 @@ function isAuthorized() {
 export async function GET() {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (process.env.DEMO_AUTH === 'true') return NextResponse.json({ books: listBooks() });
-  const books = await prisma.book.findMany();
+  const books = await getPrisma().book.findMany({ orderBy: { createdAt: 'desc' } });
   return NextResponse.json({ books });
 }
 
@@ -26,6 +26,6 @@ export async function POST(request: Request) {
     const created = createBook({ title, authors, description, pdfUrl });
     return NextResponse.json({ book: created }, { status: 201 });
   }
-  const book = await prisma.book.create({ data: { title, authors, description, pdfUrl } });
+  const book = await getPrisma().book.create({ data: { title, authors, description, pdfUrl } });
   return NextResponse.json({ book }, { status: 201 });
 }
