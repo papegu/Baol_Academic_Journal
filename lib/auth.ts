@@ -52,8 +52,11 @@ export async function signIn(email: string, password: string) {
   let dbUser = await prisma.user.findUnique({ where: { email } });
   if (!dbUser) {
     const displayName = data.user?.user_metadata?.name || email.split('@')[0];
+    // Set initial role from Supabase user metadata if provided; default to AUTHOR
+    const metaRole = (data.user?.user_metadata as any)?.role;
+    const initialRole = metaRole === 'ADMIN' || metaRole === 'EDITOR' || metaRole === 'AUTHOR' ? metaRole : 'AUTHOR';
     // Critical: store placeholder password when using Supabase Auth; we no longer check DB password
-    dbUser = await prisma.user.create({ data: { email, name: displayName, role: 'AUTHOR' as any, password: '' } });
+    dbUser = await prisma.user.create({ data: { email, name: displayName, role: initialRole as any, password: '' } });
   }
   const role = dbUser.role as any;
   return {
