@@ -39,3 +39,6 @@ Invoke-WebRequest -Uri "http://localhost:3000/api/bootstrap/admin" -Method POST 
 Notes
 - Supabase keys required for auth endpoints.
 - Mock services will be replaced with Prisma-backed persistence.
+
+Development
+- TypeScript: with `moduleResolution` set to `bundler`, explicit type packages are included via `types` in [tsconfig.json](tsconfig.json). This project sets `types: ["node", "nodemailer"]` to resolve `nodemailer` typings. Ensure `@types/nodemailer` is installed (present in dependencies).

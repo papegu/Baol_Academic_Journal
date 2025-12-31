@@ -13,6 +13,10 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    "types": [
+      "node",
+      "nodemailer"
+    ],
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
