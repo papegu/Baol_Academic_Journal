@@ -37,5 +37,6 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.12",
     "prisma": "^5.18.0"
-  }
+  },
+  "packageManager": "npm@11.5.1"
 }
