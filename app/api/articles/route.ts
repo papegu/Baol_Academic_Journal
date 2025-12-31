@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
   if (uploadRes.error) {
     return NextResponse.json({ message: uploadRes.error.message }, { status: 500 });
   }
-  const public = client.storage.from(bucket).getPublicUrl(path);
-  const pdfUrl = public?.data?.publicUrl || '';
+  const publicUrlResult = client.storage.from(bucket).getPublicUrl(path);
+  const pdfUrl = publicUrlResult?.data?.publicUrl || '';
 
   // Create Article with status SUBMITTED
   const created = await prisma.article.create({
