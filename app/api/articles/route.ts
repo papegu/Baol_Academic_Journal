@@ -4,6 +4,11 @@ import { prisma } from '../../../lib/prisma';
 import { getSupabaseAdmin } from '../../../lib/supabaseAdmin';
 import crypto from 'crypto';
 
+// Ensure this route is never statically evaluated during build
+export const dynamic = 'force-dynamic';
+// Use Node.js runtime (needed for Buffer/crypto and Prisma)
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const statusParam = searchParams.get('status');
