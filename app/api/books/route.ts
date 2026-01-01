@@ -15,7 +15,7 @@ function isAuthorized() {
 }
 
 export async function GET() {
-  if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Public listing of books
   if (process.env.DEMO_AUTH === 'true') return NextResponse.json({ books: listBooks() });
   const books = await getPrisma().book.findMany({ orderBy: { createdAt: 'desc' } });
   return NextResponse.json({ books });
