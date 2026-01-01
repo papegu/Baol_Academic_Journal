@@ -21,13 +21,13 @@ export default function BooksPage(){
     })();
   }, []);
 
-  async function initiatePayment(amount: number) {
+  async function initiatePayment(amount: number, bookId: number) {
     setError('');
     try {
       const res = await fetch('/api/paytech/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, description: 'Lecture livre BAJP' })
+        body: JSON.stringify({ amount, description: 'Lecture livre BAJP', bookId })
       });
       const data = await res.json();
       setPendingRef(data.ref || '');
@@ -61,7 +61,7 @@ export default function BooksPage(){
                   <>
                     <button
                       className="text-sm px-3 py-1 rounded bg-brand-blue-600 text-white"
-                      onClick={() => initiatePayment(1000)}
+                      onClick={() => initiatePayment(1000, b.id)}
                     >Payer et lire</button>
                     <input
                       value={pendingRef}

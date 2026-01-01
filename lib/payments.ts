@@ -1,5 +1,6 @@
 export type PaymentInit = {
   articleId?: number;
+  bookId?: number;
   amount: number;
   currency?: string;
   description?: string;
@@ -7,10 +8,14 @@ export type PaymentInit = {
 };
 
 export function buildPaymentUrl(input: PaymentInit) {
-  const { articleId, amount, currency = 'XOF', description = 'Frais de publication BAJP', customerName } = input;
+  const { articleId, bookId, amount, currency = 'XOF', description = 'Frais de publication BAJP', customerName } = input;
   const apiKey = process.env.PAYTECH_API_KEY;
   const secretKey = process.env.PAYTECH_SECRET_KEY;
-  const refBase = articleId ? `BAJ-ART-${articleId}` : `BAJ-FEE-${Date.now()}`;
+  const refBase = (typeof bookId === 'number' && !Number.isNaN(bookId))
+    ? `BAJ-BOOK-${bookId}`
+    : (typeof articleId === 'number' && !Number.isNaN(articleId))
+      ? `BAJ-ART-${articleId}`
+      : `BAJ-FEE-${Date.now()}`;
 
   if (!apiKey || !secretKey) {
     const mockUrl = `https://paytech.sn/mock/payment?ref=${encodeURIComponent(refBase)}&amount=${encodeURIComponent(amount)}&currency=${encodeURIComponent(currency)}`;

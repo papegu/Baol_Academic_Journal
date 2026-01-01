@@ -21,6 +21,22 @@ export async function GET(req: NextRequest) {
       }
       await prisma.payment.create({ data: { txId: (await prisma.transaction.findFirst({ where: { reference: parsed.ref } }))!.id, amount: parsed.amount || 0 } }).catch(() => {});
     } catch {}
+    // If ref encodes a book id, redirect user to read the book immediately
+    if (parsed.ref.startsWith('BAJ-BOOK-')) {
+      const idStr = parsed.ref.replace('BAJ-BOOK-', '');
+      const bookId = Number(idStr);
+      if (!Number.isNaN(bookId)) {
+        try {
+          const prisma = getPrisma();
+          const book = await prisma.book.findUnique({ where: { id: bookId } });
+          if (book?.pdfUrl) {
+            // Redirect to guarded streaming route
+            const target = `/api/books/pdf?key=${encodeURIComponent(book.pdfUrl)}&ref=${encodeURIComponent(parsed.ref)}`;
+            return NextResponse.redirect(target, 302);
+          }
+        } catch {}
+      }
+    }
   }
   return NextResponse.json({ received: true, ...parsed });
 }
