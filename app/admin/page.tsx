@@ -12,6 +12,7 @@ export default function AdminPage() {
   const [domains, setDomains] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [viewerKey, setViewerKey] = useState<string | null>(null);
   const router = useRouter();
 
   // Mock : vérifie le rôle dans localStorage (à remplacer par une vraie auth plus tard)
@@ -157,6 +158,24 @@ export default function AdminPage() {
               <div className="font-semibold text-brand-gray-800">{article.title}</div>
               <div className="text-sm text-brand-gray-600">{article.authors}</div>
               <div className="text-xs text-brand-gray-500">Statut : {article.status}</div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {article?.pdfUrl ? (
+                  <>
+                    <button
+                      onClick={() => setViewerKey(article.pdfUrl)}
+                      className="bg-brand-gray-200 text-brand-gray-800 px-3 py-1 rounded hover:bg-brand-gray-300"
+                    >Lire le PDF</button>
+                    <a
+                      href={`/api/articles/pdf/${article.pdfUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-brand-gray-200 text-brand-gray-800 px-3 py-1 rounded hover:bg-brand-gray-300"
+                    >Ouvrir dans un onglet</a>
+                  </>
+                ) : (
+                  <span className="text-xs text-brand-gray-500">Aucun PDF associé</span>
+                )}
+              </div>
               {article.status === 'SUBMITTED' && (
                 <>
                   <button onClick={() => updateStatus(article.id, 'ACCEPTED')} className="bg-brand-green-600 text-white px-3 py-1 rounded mr-2 hover:bg-brand-green-700">Accepter</button>
@@ -433,6 +452,35 @@ export default function AdminPage() {
         </form>
         <p className="text-xs text-brand-gray-600 mt-2">Disponible uniquement en mode démo (DEMO_AUTH=true).</p>
       </section>
+
+      {viewerKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] h-[90vh] max-w-5xl rounded shadow-lg overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Lecture du PDF</div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/api/articles/pdf/${viewerKey}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800"
+                >Ouvrir dans un onglet</a>
+                <button
+                  onClick={() => setViewerKey(null)}
+                  className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800"
+                >Fermer</button>
+              </div>
+            </div>
+            <div className="flex-1">
+              <iframe
+                title="PDF Viewer"
+                src={`/api/articles/pdf/${viewerKey}`}
+                className="w-full h-full"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
