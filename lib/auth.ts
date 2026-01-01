@@ -99,6 +99,8 @@ export async function signUp(name: string, email: string, password: string) {
   // Production path: trigger Supabase Auth email confirmation on sign-up.
   // We do NOT create a Prisma `User` yet; user record will be ensured on first confirmed login.
   const supabase = getSupabaseClient();
+  const vercelUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+  const emailRedirectTo = vercelUrl ? `${vercelUrl}/login` : undefined;
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -107,6 +109,7 @@ export async function signUp(name: string, email: string, password: string) {
         name,
         role: 'AUTHOR',
       },
+      emailRedirectTo,
       // If you have a custom redirect URL configured in Supabase, set it there.
       // emailRedirectTo can be configured in Supabase project > Auth > URL configuration.
     },
