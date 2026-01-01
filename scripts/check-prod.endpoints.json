@@ -1,0 +1,27 @@
+[
+  { "path": "/", "expect": 200, "method": "GET" },
+  { "path": "/articles", "expect": 200, "method": "GET" },
+  { "path": "/books", "expect": 200, "method": "GET" },
+  { "path": "/conferences", "expect": 200, "method": "GET" },
+  { "path": "/journals", "expect": 200, "method": "GET" },
+  { "path": "/domains", "expect": 200, "method": "GET" },
+  { "path": "/search", "expect": 200, "method": "GET" },
+  { "path": "/guidelines", "expect": 200, "method": "GET" },
+  { "path": "/policies", "expect": 200, "method": "GET" },
+  { "path": "/services", "expect": 200, "method": "GET" },
+  { "path": "/fast-track", "expect": 200, "method": "GET" },
+  { "path": "/language-support", "expect": 200, "method": "GET" },
+  { "path": "/publication-services", "expect": 200, "method": "GET" },
+  { "path": "/submit", "expect": 200, "method": "GET" },
+
+  { "path": "/api/health/supabase", "expect": 200, "method": "GET" },
+  { "path": "/api/health/db", "expect": 200, "method": "GET" },
+  { "path": "/api/health/supabase/users", "expect": 200, "method": "GET" },
+
+  { "path": "/api/articles", "expect": 200, "method": "GET" },
+  { "path": "/api/books", "expect": 200, "method": "GET" },
+  { "path": "/api/conferences", "expect": 200, "method": "GET" },
+  { "path": "/api/domains", "expect": 200, "method": "GET" },
+
+  { "path": "/api/bootstrap/admin", "expect": 401, "method": "POST" }
+]

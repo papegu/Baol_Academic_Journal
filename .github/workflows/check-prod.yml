@@ -1,0 +1,63 @@
+name: Production Endpoint Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Base URL to check (overrides repo vars)"
+        required: false
+        type: string
+      json_output:
+        description: "Set to 1 to output JSON"
+        required: false
+        type: string
+        default: "1"
+  schedule:
+    - cron: '0 6 * * *' # Daily at 06:00 UTC
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env:
+          - name: staging
+            base_url: ${{ vars.STAGING_BASE_URL }}
+            endpoints: scripts/check-prod.endpoints.staging.json
+          - name: production
+            base_url: ${{ vars.PROD_BASE_URL }}
+            endpoints: scripts/check-prod.endpoints.prod.json
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Run checks (matrix)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.base_url == '' }}
+        env:
+          JSON: '1'
+          TIMEOUT_MS: '8000'
+          RETRIES: '2'
+          CONCURRENCY: '6'
+        run: |
+          echo "Environment: ${{ matrix.env.name }}"
+          BASE_URL=${{ matrix.env.base_url }} npm run check:prod -- --endpoints ${{ matrix.env.endpoints }}
+
+      - name: Run checks (manual override)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url != '' }}
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          JSON: ${{ inputs.json_output }}
+          TIMEOUT_MS: '8000'
+          RETRIES: '2'
+          CONCURRENCY: '6'
+        run: |
+          npm run check:prod -- --endpoints scripts/check-prod.endpoints.json
