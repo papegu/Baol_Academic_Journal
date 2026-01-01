@@ -69,7 +69,7 @@ async function main() {
 
   // Stream PDF via server route (redirect or R2)
   if (key) {
-    const streamRes = await fetch(URL + '/api/articles/pdf/' + key, { redirect: 'follow' });
+    const streamRes = await fetch(URL + '/api/articles/pdf?key=' + encodeURIComponent(key), { redirect: 'follow' });
     console.log('articles stream GET:', streamRes.status, streamRes.headers.get('content-type'));
     if (!(streamRes.status >= 200 && streamRes.status < 400)) throw new Error('Articles streaming failed');
   } else {

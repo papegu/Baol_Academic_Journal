@@ -17,7 +17,7 @@ export default function ArticleList({ articles }: { articles: Article[] }) {
           <div className="font-semibold text-brand-gray-800">{article.title}</div>
           <div className="text-sm text-brand-gray-600">{article.authors}</div>
           <div className="text-xs text-brand-gray-500">Statut : {article.status}</div>
-          <a href={`/api/articles/pdf/${article.pdfUrl}`} className="text-brand-blue-600 underline">Lire le PDF</a>
+          <a href={`/api/articles/pdf?key=${encodeURIComponent(article.pdfUrl)}`} className="text-brand-blue-600 underline">Lire le PDF</a>
         </li>
       ))}
     </ul>

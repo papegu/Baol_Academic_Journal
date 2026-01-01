@@ -496,7 +496,7 @@ export default function AdminPage() {
             <div className="flex-1">
               <iframe
                 title="PDF Viewer"
-                src={`/api/articles/pdf/${viewerKey}`}
+                src={`/api/articles/pdf?key=${encodeURIComponent(viewerKey || '')}`}
                 className="w-full h-full"
               />
             </div>
