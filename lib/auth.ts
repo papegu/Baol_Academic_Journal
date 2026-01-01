@@ -121,5 +121,12 @@ export async function signUp(name: string, email: string, password: string) {
     e.name = 'SupabaseSignupError';
     throw e;
   }
-  return { user: data?.user || ({ email, user_metadata: { name, role: 'AUTHOR' } } as any) };
+  // Ensure a corresponding Prisma `User` record exists immediately after signup
+  const prisma = getPrisma();
+  const dbUser = await prisma.user.upsert({
+    where: { email },
+    update: { name },
+    create: { email, name, role: 'AUTHOR' as any, password: '' },
+  });
+  return { user: data?.user || ({ email, user_metadata: { name, role: 'AUTHOR' } } as any), dbUser };
 }

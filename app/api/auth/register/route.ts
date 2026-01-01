@@ -8,9 +8,10 @@ export async function POST(req: NextRequest) {
   const { name, email, password } = await req.json();
   if (!name || !email || !password) return NextResponse.json({ message: 'Champs requis manquants' }, { status: 400 });
   try {
-    const { user } = await signUp(name, email, password);
+    const { user, dbUser } = await signUp(name, email, password);
     return NextResponse.json({
       user,
+      dbUser,
       message: 'Inscription réussie. Vérifiez votre email pour confirmer votre compte.',
     }, { status: 201 });
   } catch (err: any) {
