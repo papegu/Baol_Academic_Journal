@@ -15,6 +15,7 @@
     "check:prod": "node scripts/check-prod.mjs",
     "bootstrap:storage": "node scripts/bootstrap-storage.mjs"
   },
+  "postinstall": "prisma generate",
   "prisma": {
     "seed": "node scripts/seed.cjs"
   },

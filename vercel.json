@@ -1,4 +1,4 @@
 {
   "version": 2,
-  "buildCommand": "npm ci --no-audit --no-fund && npm run build"
+  "buildCommand": "npm ci --no-audit --no-fund && npm run prisma:generate && npm run build"
 }
