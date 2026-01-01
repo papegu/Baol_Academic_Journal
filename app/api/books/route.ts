@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { listBooks, createBook, Book } from '../../../lib/books';
 import { getPrisma } from '../../../lib/prisma';
 import { r2PutPdf, makeBookKey } from '../../../lib/r2';
+import { uploadPdf } from '../../../lib/storage';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -55,12 +56,19 @@ export async function POST(request: NextRequest) {
 
   let key = pdfKey;
   if (!key && file) {
-    const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
-    const uuid = crypto.randomUUID();
-    const k = makeBookKey(title, uuid);
     const buffer = Buffer.from(await file.arrayBuffer());
-    await r2PutPdf(bucket, k, new Uint8Array(buffer));
-    key = k;
+    const hasR2 = !!(process.env.R2_ENDPOINT && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
+    if (hasR2) {
+      const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
+      const uuid = crypto.randomUUID();
+      const k = makeBookKey(title, uuid);
+      await r2PutPdf(bucket, k, new Uint8Array(buffer));
+      key = k;
+    } else {
+      // Fallback: use existing upload helper (Cloudflare endpoint or Supabase)
+      const filename = `${Date.now()}-${crypto.randomUUID()}.pdf`;
+      key = await uploadPdf(buffer, 0, filename);
+    }
   }
 
   const book = await getPrisma().book.create({ data: { title, authors, description, pdfUrl: key } });
