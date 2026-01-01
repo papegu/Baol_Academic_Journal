@@ -24,5 +24,8 @@ export function parseCallback(url: string) {
   const { searchParams } = new URL(url);
   const status = searchParams.get('status') || 'unknown';
   const ref = searchParams.get('ref') || 'NA';
-  return { status, ref };
+  const amountStr = searchParams.get('amount') || '';
+  const currency = searchParams.get('currency') || 'XOF';
+  const amount = amountStr ? Number(amountStr) : undefined;
+  return { status, ref, amount, currency };
 }
