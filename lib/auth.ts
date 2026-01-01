@@ -62,11 +62,15 @@ export async function signIn(email: string, password: string) {
       }
       const admin = getSupabaseAdmin();
       const list = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-      const exists = Array.isArray(list?.data?.users)
-        ? list.data.users.some(u => (u.email || '').toLowerCase() === email.toLowerCase())
-        : false;
-      if (!exists) {
+      const users = Array.isArray(list?.data?.users) ? list.data.users : [];
+      const found = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase());
+      if (!found) {
         throw new Error('Email inconnu: aucun utilisateur Supabase avec cette adresse.');
+      }
+      // Distinguish between unconfirmed email and wrong password
+      const confirmed = (found as any)?.email_confirmed_at || (found as any)?.confirmed_at || null;
+      if (!confirmed) {
+        throw new Error('Email non confirmé: veuillez vérifier votre boîte mail pour valider votre compte.');
       }
       throw new Error('Mot de passe invalide pour cet utilisateur.');
     } catch (e: any) {
