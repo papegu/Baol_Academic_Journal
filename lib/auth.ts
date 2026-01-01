@@ -1,8 +1,6 @@
 import { getEditorPassword } from './demoAuthState';
 import { getPrisma } from './prisma';
-import { getSupabaseClient } from './supabaseClient';
 import crypto from 'crypto';
-import { getSupabaseAdmin } from './supabaseAdmin';
 
 function hashPassword(pw: string) {
   return crypto.createHash('sha256').update(pw, 'utf8').digest('hex');
@@ -43,55 +41,21 @@ export async function signIn(email: string, password: string) {
     }
     throw new Error('Identifiants invalides');
   }
-  // Production path: authenticate via Supabase Auth, then verify/create user in Prisma `User` table
-  // Validate envs for clearer diagnostics
-  const pubUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const pubAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const srvKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  if (!pubUrl || !pubAnon) {
-    const missing = [!pubUrl ? 'NEXT_PUBLIC_SUPABASE_URL' : null, !pubAnon ? 'NEXT_PUBLIC_SUPABASE_ANON_KEY' : null]
-      .filter(Boolean).join(', ');
-    throw new Error(`Configuration Supabase manquante: ${missing}.`);
-  }
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error || !data?.session) {
-    try {
-      if (!srvKey) {
-        throw new Error('Identifiants invalides (SUPABASE_SERVICE_ROLE_KEY manquant pour vérifier l’utilisateur).');
-      }
-      const admin = getSupabaseAdmin();
-      const list = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-      const users = Array.isArray(list?.data?.users) ? list.data.users : [];
-      const found = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase());
-      if (!found) {
-        throw new Error('Email inconnu: aucun utilisateur Supabase avec cette adresse.');
-      }
-      // Distinguish between unconfirmed email and wrong password
-      const confirmed = (found as any)?.email_confirmed_at || (found as any)?.confirmed_at || null;
-      if (!confirmed) {
-        throw new Error('Email non confirmé: veuillez vérifier votre boîte mail pour valider votre compte.');
-      }
-      throw new Error('Mot de passe invalide pour cet utilisateur.');
-    } catch (e: any) {
-      throw new Error(e?.message || error?.message || 'Identifiants invalides');
-    }
-  }
-  // Ensure user exists in Prisma `User` table (Supabase Postgres)
-  let dbUser = await getPrisma().user.findUnique({ where: { email } });
+  // Production path: authenticate against Prisma `User` table (DB-based auth)
+  const prisma = getPrisma();
+  const dbUser = await prisma.user.findUnique({ where: { email } });
   if (!dbUser) {
-    const displayName = data.user?.user_metadata?.name || email.split('@')[0];
-    // Set initial role from Supabase user metadata if provided; default to AUTHOR
-    const metaRole = (data.user?.user_metadata as any)?.role;
-    const initialRole = metaRole === 'ADMIN' || metaRole === 'EDITOR' || metaRole === 'AUTHOR' ? metaRole : 'AUTHOR';
-    // Critical: store placeholder password when using Supabase Auth; we no longer check DB password
-    dbUser = await getPrisma().user.create({ data: { email, name: displayName, role: initialRole as any, password: '' } });
+    throw new Error('Email inconnu: aucun utilisateur avec cette adresse.');
+  }
+  const hashed = hashPassword(password);
+  if (!dbUser.password || dbUser.password !== hashed) {
+    throw new Error('Mot de passe invalide pour cet utilisateur.');
   }
   const role = dbUser.role as any;
   return {
     user: { email: dbUser.email, user_metadata: { name: dbUser.name, role } } as any,
     role,
-    access_token: data.session.access_token,
+    access_token: 'db-auth-token',
   };
 }
 
@@ -100,37 +64,15 @@ export async function signUp(name: string, email: string, password: string) {
   if (process.env.DEMO_AUTH === 'true') {
     return { user: { email, user_metadata: { name } } as any };
   }
-  // Production path: trigger Supabase Auth email confirmation on sign-up.
-  // We do NOT create a Prisma `User` yet; user record will be ensured on first confirmed login.
-  const supabase = getSupabaseClient();
-  const vercelUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
-  const emailRedirectTo = vercelUrl ? `${vercelUrl}/login` : undefined;
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        role: 'AUTHOR',
-      },
-      emailRedirectTo,
-      // If you have a custom redirect URL configured in Supabase, set it there.
-      // emailRedirectTo can be configured in Supabase project > Auth > URL configuration.
-    },
-  });
-  if (error) {
-    const e: any = new Error(error.message || "Erreur lors de l'inscription");
-    e.status = (error as any).status || 400;
-    e.code = (error as any).error_code || 'SIGNUP_ERROR';
-    e.name = 'SupabaseSignupError';
-    throw e;
-  }
-  // Ensure a corresponding Prisma `User` record exists immediately after signup
+  // Production path: create Prisma `User` with hashed password (DB-based auth)
   const prisma = getPrisma();
-  const dbUser = await prisma.user.upsert({
-    where: { email },
-    update: { name },
-    create: { email, name, role: 'AUTHOR' as any, password: '' },
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    throw new Error('Un utilisateur avec cet email existe déjà.');
+  }
+  const hashed = hashPassword(password);
+  const dbUser = await prisma.user.create({
+    data: { email, name, role: 'AUTHOR' as any, password: hashed },
   });
-  return { user: data?.user || ({ email, user_metadata: { name, role: 'AUTHOR' } } as any), dbUser };
+  return { user: { email, user_metadata: { name, role: 'AUTHOR' } } as any, dbUser };
 }
