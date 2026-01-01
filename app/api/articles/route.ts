@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getPrisma } from '../../../lib/prisma';
-import { getSupabaseAdmin } from '../../../lib/supabaseAdmin';
+import { r2PutPdf, makeArticleKey } from '../../../lib/r2';
 import crypto from 'crypto';
 
 // Ensure this route is never statically evaluated during build
@@ -22,19 +22,10 @@ export async function PATCH(req: NextRequest) {
   const articleId = Number(id);
   if (!articleId || !status) return NextResponse.json({ message: 'Paramètres invalides' }, { status: 400 });
 
-  // If reject: remove storage object then delete DB record
+  // If reject: delete DB record (PDF cleanup is handled separately or via R2 lifecycle)
   if (status === 'REJECTED') {
     const existing = await getPrisma().article.findUnique({ where: { id: articleId } });
     if (!existing) return NextResponse.json({ message: 'Article introuvable' }, { status: 404 });
-    try {
-      const client = getSupabaseAdmin();
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const prefix = `${url}/storage/v1/object/public/articles/`;
-      const path = existing.pdfUrl?.startsWith(prefix) ? existing.pdfUrl.slice(prefix.length) : '';
-      if (path) {
-        await client.storage.from('articles').remove([path]);
-      }
-    } catch {}
     await getPrisma().article.delete({ where: { id: articleId } });
     return NextResponse.json({ message: 'Soumission rejetée et supprimée' });
   }
@@ -44,14 +35,31 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Soumission d'un article via multipart/form-data (upload Storage + enregistrement DB)
-  const form = await req.formData();
-  const title = String(form.get('title') || '');
-  const authors = String(form.get('authors') || '');
-  const abstract = String(form.get('abstract') || '');
-  const file = form.get('file') as File | null;
-  if (!title || !authors || !abstract || !file) {
-    return NextResponse.json({ message: 'Champs requis manquants' }, { status: 400 });
+  // Accept either multipart upload or JSON with `pdfKey`
+  const contentType = req.headers.get('content-type') || '';
+  let title = '';
+  let authors = '';
+  let abstract = '';
+  let pdfKey = '';
+  let file: File | null = null;
+  if (contentType.includes('multipart/form-data')) {
+    const form = await req.formData();
+    title = String(form.get('title') || '');
+    authors = String(form.get('authors') || '');
+    abstract = String(form.get('abstract') || '');
+    file = form.get('file') as File | null;
+    if (!title || !authors || !abstract || !file) {
+      return NextResponse.json({ message: 'Champs requis manquants' }, { status: 400 });
+    }
+  } else {
+    const body = await req.json();
+    title = String(body?.title || '');
+    authors = String(body?.authors || '');
+    abstract = String(body?.abstract || '');
+    pdfKey = String(body?.pdfKey || '');
+    if (!title || !authors || !abstract || !pdfKey) {
+      return NextResponse.json({ message: 'Champs requis manquants' }, { status: 400 });
+    }
   }
 
   // Resolve user from cookie
@@ -59,23 +67,19 @@ export async function POST(req: NextRequest) {
   const user = email ? await getPrisma().user.findUnique({ where: { email } }) : null;
   if (!user) return NextResponse.json({ message: "Utilisateur non authentifié" }, { status: 401 });
 
-  // Upload PDF to Supabase Storage
-  const client = getSupabaseAdmin();
-  const bucket = 'articles';
-  const ext = '.pdf';
-  const filename = `${Date.now()}-${crypto.randomUUID()}${ext}`;
-  const path = `${user.id}/${filename}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const uploadRes = await client.storage.from(bucket).upload(path, buffer, { contentType: 'application/pdf', upsert: false });
-  if (uploadRes.error) {
-    return NextResponse.json({ message: uploadRes.error.message }, { status: 500 });
+  let key = pdfKey;
+  if (!key && file) {
+    const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
+    const uuid = crypto.randomUUID();
+    const k = makeArticleKey(title, uuid);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await r2PutPdf(bucket, k, new Uint8Array(buffer));
+    key = k;
   }
-  const publicUrlResult = client.storage.from(bucket).getPublicUrl(path);
-  const pdfUrl = publicUrlResult?.data?.publicUrl || '';
 
   // Create Article with status SUBMITTED
   const created = await getPrisma().article.create({
-    data: { title, authors, abstract, pdfUrl, status: 'SUBMITTED' as any, userId: user.id }
+    data: { title, authors, abstract, pdfUrl: key, status: 'SUBMITTED' as any, userId: user.id }
   });
   return NextResponse.json({ message: 'Soumission reçue', article: created }, { status: 201 });
 }
