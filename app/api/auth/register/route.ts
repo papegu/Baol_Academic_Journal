@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
       message: 'Inscription réussie. Vérifiez votre email pour confirmer votre compte.',
     }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ message: err?.message || 'Erreur lors de l\'inscription' }, { status: 400 });
+    const status = err?.status || 400;
+    const code = err?.code || 'SIGNUP_ERROR';
+    return NextResponse.json({ code, message: err?.message || 'Erreur lors de l\'inscription' }, { status });
   }
 }

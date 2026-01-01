@@ -114,6 +114,12 @@ export async function signUp(name: string, email: string, password: string) {
       // emailRedirectTo can be configured in Supabase project > Auth > URL configuration.
     },
   });
-  if (error) throw new Error(error.message || "Erreur lors de l'inscription");
+  if (error) {
+    const e: any = new Error(error.message || "Erreur lors de l'inscription");
+    e.status = (error as any).status || 400;
+    e.code = (error as any).error_code || 'SIGNUP_ERROR';
+    e.name = 'SupabaseSignupError';
+    throw e;
+  }
   return { user: data?.user || ({ email, user_metadata: { name, role: 'AUTHOR' } } as any) };
 }
