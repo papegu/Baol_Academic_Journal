@@ -56,18 +56,23 @@ export async function POST(request: NextRequest) {
 
   let key = pdfKey;
   if (!key && file) {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const hasR2 = !!(process.env.R2_ENDPOINT && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
-    if (hasR2) {
-      const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
-      const uuid = crypto.randomUUID();
-      const k = makeBookKey(title, uuid);
-      await r2PutPdf(bucket, k, new Uint8Array(buffer));
-      key = k;
-    } else {
-      // Fallback: use existing upload helper (Cloudflare endpoint or Supabase)
-      const filename = `${Date.now()}-${crypto.randomUUID()}.pdf`;
-      key = await uploadPdf(buffer, 0, filename);
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const hasR2 = !!(process.env.R2_ENDPOINT && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
+      if (hasR2) {
+        const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
+        const uuid = crypto.randomUUID();
+        const k = makeBookKey(title, uuid);
+        await r2PutPdf(bucket, k, new Uint8Array(buffer));
+        key = k;
+      } else {
+        // Fallback: use existing upload helper (Cloudflare endpoint or Supabase)
+        const filename = `${Date.now()}-${crypto.randomUUID()}.pdf`;
+        key = await uploadPdf(buffer, 0, filename);
+      }
+    } catch (err: any) {
+      const msg = err?.message || 'Erreur de dépôt du PDF';
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
   }
 
