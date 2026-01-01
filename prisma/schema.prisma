@@ -21,8 +21,6 @@ model User {
   password    String
   name        String
   role        Role         @default(AUTHOR)
-  location    Location?    @relation(fields: [locationId], references: [id])
-  locationId  Int?
   articles    Article[]
   submissions Submission[]
   alerts      CommunityAlert[]
@@ -164,7 +162,6 @@ model Location {
   latitude   Float?
   longitude  Float?
   meta       Json?
-  users      User[]
   alerts     CommunityAlert[]
   zones      Zone[]
   createdAt  DateTime  @default(now())
