@@ -38,3 +38,15 @@ export function makeArticleKey(title: string, uuid: string): string {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   return `articles/${year}/${slug}-${uuid}.pdf`;
 }
+
+export function makeBookKey(title: string, uuid: string): string {
+  const year = new Date().getFullYear();
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return `books/${year}/${slug}-${uuid}.pdf`;
+}
+
+export function makeSubmissionKey(title: string, userId: number, uuid: string): string {
+  const year = new Date().getFullYear();
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return `submissions/${year}/${userId}/${slug}-${uuid}.pdf`;
+}

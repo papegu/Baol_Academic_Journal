@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getPrisma } from '../../../lib/prisma';
 import { uploadPdf } from '../../../lib/storage';
+import { r2PutPdf, makeSubmissionKey } from '../../../lib/r2';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -32,12 +33,22 @@ export async function POST(req: NextRequest) {
   const user = email ? await getPrisma().user.findUnique({ where: { email } }) : null;
   if (!user) return NextResponse.json({ message: 'Utilisateur non authentifié' }, { status: 401 });
 
-  const ext = '.pdf';
-  const filename = `${Date.now()}-${crypto.randomUUID()}${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   try {
-    const pdfUrl = await uploadPdf(buffer, user.id, filename);
-    const sub = await getPrisma().submission.create({ data: { title, authors, abstract, pdfUrl, userId: user.id } });
+    let pdfKey = '';
+    const hasR2 = !!(process.env.R2_ENDPOINT && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
+    if (hasR2) {
+      const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
+      const uuid = crypto.randomUUID();
+      const key = makeSubmissionKey(title, user.id, uuid);
+      await r2PutPdf(bucket, key, new Uint8Array(buffer));
+      pdfKey = key;
+    } else {
+      const ext = '.pdf';
+      const filename = `${Date.now()}-${crypto.randomUUID()}${ext}`;
+      pdfKey = await uploadPdf(buffer, user.id, filename);
+    }
+    const sub = await getPrisma().submission.create({ data: { title, authors, abstract, pdfUrl: pdfKey, userId: user.id } });
     return NextResponse.json({ submission: sub, message: 'Soumission reçue' }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ message: err?.message || 'Erreur lors du dépôt du PDF' }, { status: 500 });

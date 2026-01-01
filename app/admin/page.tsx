@@ -239,14 +239,28 @@ export default function AdminPage() {
               const title = (form.elements.namedItem('title') as HTMLInputElement).value;
               const authors = (form.elements.namedItem('authors') as HTMLInputElement).value;
               const description = (form.elements.namedItem('description') as HTMLInputElement).value;
-              const res = await fetch('/api/books', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, authors, description }) });
-              if (res.ok) { fetchBooks(); (form.elements.namedItem('title') as HTMLInputElement).value=''; (form.elements.namedItem('authors') as HTMLInputElement).value=''; (form.elements.namedItem('description') as HTMLInputElement).value=''; }
+              const fileInput = form.elements.namedItem('file') as HTMLInputElement | null;
+              const file = fileInput?.files?.[0] || null;
+              const fd = new FormData();
+              fd.append('title', title);
+              fd.append('authors', authors);
+              fd.append('description', description);
+              if (file) fd.append('file', file);
+              const res = await fetch('/api/books', { method: 'POST', body: fd });
+              if (res.ok) {
+                fetchBooks();
+                (form.elements.namedItem('title') as HTMLInputElement).value='';
+                (form.elements.namedItem('authors') as HTMLInputElement).value='';
+                (form.elements.namedItem('description') as HTMLInputElement).value='';
+                if (fileInput) fileInput.value = '';
+              }
             }}
             className="space-y-2 mb-3"
           >
             <input name="title" placeholder="Titre" className="w-full border px-3 py-2 rounded" />
             <input name="authors" placeholder="Auteurs" className="w-full border px-3 py-2 rounded" />
             <input name="description" placeholder="Description" className="w-full border px-3 py-2 rounded" />
+            <input name="file" type="file" accept="application/pdf" className="w-full border px-3 py-2 rounded" />
             <button className="bg-brand-blue-600 text-white px-3 py-1 rounded">Ajouter</button>
           </form>
           <ul className="space-y-2">
@@ -255,6 +269,14 @@ export default function AdminPage() {
                 <div>
                   <div className="font-medium">{b.title}</div>
                   <div className="text-sm text-brand-gray-600">{b.authors}</div>
+                  {b?.pdfUrl ? (
+                    <div className="mt-1">
+                      <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded mr-2" onClick={() => setViewerKey(b.pdfUrl)}>Lire le PDF</button>
+                      <a href={`/api/books/pdf/${b.pdfUrl}`} target="_blank" rel="noopener noreferrer" className="text-sm px-2 py-1 bg-brand-gray-200 rounded">Ouvrir dans un onglet</a>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-brand-gray-500">Aucun PDF</div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {

@@ -1,7 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { listBooks, createBook, Book } from '../../../lib/books';
 import { getPrisma } from '../../../lib/prisma';
+import { r2PutPdf, makeBookKey } from '../../../lib/r2';
+import crypto from 'crypto';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 function isAuthorized() {
   const role = cookies().get('role')?.value;
@@ -15,17 +20,49 @@ export async function GET() {
   return NextResponse.json({ books });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const body = await request.json();
-  const { title, authors, description, pdfUrl } = body as Partial<Book>;
-  if (!title || !authors || !description) {
-    return NextResponse.json({ error: 'Champs manquants' }, { status: 400 });
+  const contentType = request.headers.get('content-type') || '';
+  let title = '';
+  let authors = '';
+  let description = '';
+  let file: File | null = null;
+  let pdfKey = '';
+  if (contentType.includes('multipart/form-data')) {
+    const form = await request.formData();
+    title = String(form.get('title') || '');
+    authors = String(form.get('authors') || '');
+    description = String(form.get('description') || '');
+    file = form.get('file') as File | null;
+    if (!title || !authors || !description || !file) {
+      return NextResponse.json({ error: 'Champs manquants' }, { status: 400 });
+    }
+  } else {
+    const body = await request.json();
+    title = String(body?.title || '');
+    authors = String(body?.authors || '');
+    description = String(body?.description || '');
+    pdfKey = String(body?.pdfKey || '');
+    if (!title || !authors || !description || !pdfKey) {
+      return NextResponse.json({ error: 'Champs manquants' }, { status: 400 });
+    }
   }
+
   if (process.env.DEMO_AUTH === 'true') {
-    const created = createBook({ title, authors, description, pdfUrl });
+    const created = createBook({ title, authors, description, pdfUrl: file ? (file as any).name : pdfKey });
     return NextResponse.json({ book: created }, { status: 201 });
   }
-  const book = await getPrisma().book.create({ data: { title, authors, description, pdfUrl } });
+
+  let key = pdfKey;
+  if (!key && file) {
+    const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
+    const uuid = crypto.randomUUID();
+    const k = makeBookKey(title, uuid);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await r2PutPdf(bucket, k, new Uint8Array(buffer));
+    key = k;
+  }
+
+  const book = await getPrisma().book.create({ data: { title, authors, description, pdfUrl: key } });
   return NextResponse.json({ book }, { status: 201 });
 }
