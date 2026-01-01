@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { r2GetPdf } from '../../../../../lib/r2';
 
 export const runtime = 'nodejs';
@@ -9,6 +9,9 @@ export async function GET(req: NextRequest, { params }: { params: { key: string[
   const key = (params?.key || []).join('/');
   if (!key) return new Response('Missing key', { status: 400 });
   try {
+    if (key.startsWith('http://') || key.startsWith('https://')) {
+      return NextResponse.redirect(key, 302);
+    }
     const obj = await r2GetPdf(bucket, key);
     const body = obj.Body as ReadableStream<any> | undefined;
     if (!body) return new Response('Not found', { status: 404 });

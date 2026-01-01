@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getPrisma } from '../../../lib/prisma';
 import { r2PutPdf, makeArticleKey } from '../../../lib/r2';
+import { uploadPdf } from '../../../lib/storage';
 import crypto from 'crypto';
 
 // Ensure this route is never statically evaluated during build
@@ -69,12 +70,23 @@ export async function POST(req: NextRequest) {
 
   let key = pdfKey;
   if (!key && file) {
-    const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
-    const uuid = crypto.randomUUID();
-    const k = makeArticleKey(title, uuid);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await r2PutPdf(bucket, k, new Uint8Array(buffer));
-    key = k;
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const hasR2 = !!(process.env.R2_ENDPOINT && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
+      if (hasR2) {
+        const bucket = process.env.R2_BUCKET_NAME || 'ebooks-bajp';
+        const uuid = crypto.randomUUID();
+        const k = makeArticleKey(title, uuid);
+        await r2PutPdf(bucket, k, new Uint8Array(buffer));
+        key = k;
+      } else {
+        const filename = `${Date.now()}-${crypto.randomUUID()}.pdf`;
+        key = await uploadPdf(buffer, user.id, filename);
+      }
+    } catch (err: any) {
+      const msg = err?.message || 'Erreur lors du dépôt du PDF';
+      return NextResponse.json({ message: msg }, { status: 500 });
+    }
   }
 
   // Create Article with status SUBMITTED
