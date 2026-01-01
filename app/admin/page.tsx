@@ -272,7 +272,7 @@ export default function AdminPage() {
                   {b?.pdfUrl ? (
                     <div className="mt-1">
                       <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded mr-2" onClick={() => setViewerKey(b.pdfUrl)}>Lire le PDF</button>
-                      <a href={`/api/books/pdf/${b.pdfUrl}`} target="_blank" rel="noopener noreferrer" className="text-sm px-2 py-1 bg-brand-gray-200 rounded">Ouvrir dans un onglet</a>
+                      <a href={`/api/books/pdf?key=${encodeURIComponent(b.pdfUrl)}`} target="_blank" rel="noopener noreferrer" className="text-sm px-2 py-1 bg-brand-gray-200 rounded">Ouvrir dans un onglet</a>
                     </div>
                   ) : (
                     <div className="text-xs text-brand-gray-500">Aucun PDF</div>
