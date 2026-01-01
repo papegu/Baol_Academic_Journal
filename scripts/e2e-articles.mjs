@@ -42,8 +42,10 @@ async function main() {
   form.append('file', blob, 'e2e-article.pdf');
 
   const postRes = await fetch(URL + '/api/articles', { method: 'POST', headers: { Cookie: cookieHeader }, body: form });
-  const postData = await postRes.json().catch(() => ({}));
-  console.log('articles POST:', postRes.status, postData);
+  const postText = await postRes.text();
+  let postData = {};
+  try { postData = JSON.parse(postText); } catch {}
+  console.log('articles POST:', postRes.status, postData || postText);
   if (!postRes.ok) throw new Error('Article submit failed');
   const aid = postData?.article?.id;
   const key = postData?.article?.pdfUrl || '';
