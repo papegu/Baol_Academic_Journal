@@ -2,6 +2,7 @@ import { getEditorPassword } from './demoAuthState';
 import { getPrisma } from './prisma';
 import { getSupabaseClient } from './supabaseClient';
 import crypto from 'crypto';
+import { getSupabaseAdmin } from './supabaseAdmin';
 
 function hashPassword(pw: string) {
   return crypto.createHash('sha256').update(pw, 'utf8').digest('hex');
@@ -43,10 +44,34 @@ export async function signIn(email: string, password: string) {
     throw new Error('Identifiants invalides');
   }
   // Production path: authenticate via Supabase Auth, then verify/create user in Prisma `User` table
+  // Validate envs for clearer diagnostics
+  const pubUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const pubAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const srvKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (!pubUrl || !pubAnon) {
+    const missing = [!pubUrl ? 'NEXT_PUBLIC_SUPABASE_URL' : null, !pubAnon ? 'NEXT_PUBLIC_SUPABASE_ANON_KEY' : null]
+      .filter(Boolean).join(', ');
+    throw new Error(`Configuration Supabase manquante: ${missing}.`);
+  }
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data?.session) {
-    throw new Error(error?.message || 'Identifiants invalides');
+    try {
+      if (!srvKey) {
+        throw new Error('Identifiants invalides (SUPABASE_SERVICE_ROLE_KEY manquant pour vérifier l’utilisateur).');
+      }
+      const admin = getSupabaseAdmin();
+      const list = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const exists = Array.isArray(list?.data?.users)
+        ? list.data.users.some(u => (u.email || '').toLowerCase() === email.toLowerCase())
+        : false;
+      if (!exists) {
+        throw new Error('Email inconnu: aucun utilisateur Supabase avec cette adresse.');
+      }
+      throw new Error('Mot de passe invalide pour cet utilisateur.');
+    } catch (e: any) {
+      throw new Error(e?.message || error?.message || 'Identifiants invalides');
+    }
   }
   // Ensure user exists in Prisma `User` table (Supabase Postgres)
   let dbUser = await getPrisma().user.findUnique({ where: { email } });
