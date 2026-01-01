@@ -102,8 +102,15 @@ export async function signUp(name: string, email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    // Optional: Supabase will send a confirmation email; redirect is configured in Supabase settings.
+    options: {
+      data: {
+        name,
+        role: 'AUTHOR',
+      },
+      // If you have a custom redirect URL configured in Supabase, set it there.
+      // emailRedirectTo can be configured in Supabase project > Auth > URL configuration.
+    },
   });
   if (error) throw new Error(error.message || "Erreur lors de l'inscription");
-  return { user: { email, user_metadata: { name } } as any };
+  return { user: data?.user || ({ email, user_metadata: { name, role: 'AUTHOR' } } as any) };
 }
