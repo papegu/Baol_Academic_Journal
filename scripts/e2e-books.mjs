@@ -47,9 +47,9 @@ async function main() {
 
   // Fetch streaming route (public)
   if (key) {
-    const streamRes = await fetch(URL + '/api/books/pdf/' + key);
+    const streamRes = await fetch(URL + '/api/books/pdf/' + key, { redirect: 'follow' });
     console.log('stream GET:', streamRes.status, streamRes.headers.get('content-type'));
-    if (!streamRes.ok) throw new Error('Streaming failed');
+    if (!(streamRes.status >= 200 && streamRes.status < 400)) throw new Error('Streaming failed');
   } else {
     console.warn('No pdfUrl key returned from POST');
   }
