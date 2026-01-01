@@ -37,7 +37,7 @@ export default function SubmitArticlePage() {
     formData.append('abstract', abstract);
     formData.append('file', file);
     try {
-      const res = await fetch('/api/articles', {
+      const res = await fetch('/api/submissions', {
         method: 'POST',
         body: formData
       });
