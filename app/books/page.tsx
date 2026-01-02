@@ -32,7 +32,11 @@ export default function BooksPage(){
       const data = await res.json();
       setPendingRef(data.ref || '');
       // Navigate to the provider's checkout in the same tab to avoid popup blockers
-      if (data.url) window.location.href = data.url;
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.reason || 'Erreur de paiement');
+      }
     } catch (e: any) {
       setError(e?.message || 'Erreur de paiement');
     }
