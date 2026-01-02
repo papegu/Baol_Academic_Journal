@@ -90,7 +90,7 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
 }
 
 export async function buildPaymentUrl(input: PaymentInit) {
-  const { articleId, bookId, amount, currency = 'XOF', description = 'Frais de publication BAJP', customerName } = input;
+  const { articleId, bookId, amount, currency = 'USD', description = 'Frais de publication BAJP', customerName } = input;
   const apiKey = process.env.PAYTECH_API_KEY;
   const secretKey = process.env.PAYTECH_SECRET_KEY;
   const refBase = (typeof bookId === 'number' && !Number.isNaN(bookId))
@@ -129,7 +129,7 @@ export function parseCallback(url: string) {
   const status = searchParams.get('status') || 'unknown';
   const ref = searchParams.get('ref') || 'NA';
   const amountStr = searchParams.get('amount') || '';
-  const currency = searchParams.get('currency') || 'XOF';
+  const currency = searchParams.get('currency') || 'USD';
   const amount = amountStr ? Number(amountStr) : undefined;
   return { status, ref, amount, currency };
 }

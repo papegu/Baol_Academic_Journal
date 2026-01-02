@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function AuthorPaymentPage() {
-  const [amount, setAmount] = useState<number>(50000);
+  const [amount, setAmount] = useState<number>(500);
   const [description, setDescription] = useState<string>("Frais de publication BAJP");
   const [link, setLink] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ export default function AuthorPaymentPage() {
       const res = await fetch("/api/paytech/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, currency: "XOF", description })
+        body: JSON.stringify({ amount, currency: "USD", description })
       });
       const data = await res.json();
       if (res.ok && data?.url) {
@@ -36,7 +36,7 @@ export default function AuthorPaymentPage() {
       <h2 className="text-2xl font-bold text-brand-gray-800">Paiement des frais de publication</h2>
       <p className="text-brand-gray-700">Régler vos frais de publication directement en ligne.</p>
       <div className="space-y-2">
-        <label className="block text-sm font-medium">Montant (XOF)</label>
+        <label className="block text-sm font-medium">Montant (USD)</label>
         <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} className="border px-3 py-2 rounded w-full" />
       </div>
       <div className="space-y-2">

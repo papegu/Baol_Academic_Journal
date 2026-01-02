@@ -21,13 +21,15 @@ export default function BooksPage(){
     })();
   }, []);
 
-  async function initiatePayment(amount: number, bookId: number) {
+  async function initiatePayment(amountXof: number, bookId: number) {
     setError('');
     try {
+      const rate = Number(process.env.NEXT_PUBLIC_XOF_PER_USD || '600');
+      const amount = Math.round(((amountXof / (rate > 0 ? rate : 600)) * 100)) / 100;
       const res = await fetch('/api/paytech/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, description: 'Lecture livre BAJP', bookId })
+        body: JSON.stringify({ amount, currency: 'USD', description: 'Lecture livre BAJP', bookId })
       });
       const data = await res.json();
       setPendingRef(data.ref || '');

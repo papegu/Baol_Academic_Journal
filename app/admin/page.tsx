@@ -592,7 +592,7 @@ export default function AdminPage() {
             {transactions.map((t: any) => (
               <li key={t.id} className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium">{t.reference} — {t.amount} CFA</div>
+                  <div className="font-medium">{t.reference} — ${t.amount}</div>
                   <div className="text-sm text-brand-gray-600">{t.status}</div>
                 </div>
                 <div className="flex gap-2">

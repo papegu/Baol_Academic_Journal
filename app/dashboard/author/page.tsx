@@ -45,17 +45,25 @@ export default function AuthorDashboardPage() {
 
       <div className="mt-4">
         <PaymentButton
-          amount={5000}
+          amount={(() => {
+            const xof = 5000;
+            const rate = Number(process.env.NEXT_PUBLIC_XOF_PER_USD || '600');
+            const usd = xof / (rate > 0 ? rate : 600);
+            return Math.round(usd * 100) / 100;
+          })()}
           onPay={async () => {
             try {
               const target = articles.find(a => a.status === 'ACCEPTED');
+              const xof = 5000;
+              const rate = Number(process.env.NEXT_PUBLIC_XOF_PER_USD || '600');
+              const amountUSD = Math.round((xof / (rate > 0 ? rate : 600)) * 100) / 100;
               const res = await fetch('/api/paytech/initiate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ articleId: target?.id || null }),
+                body: JSON.stringify({ articleId: target?.id || null, amount: amountUSD, currency: 'USD', description: 'Frais de publication BAJP' }),
               });
               const data = await res.json();
-              if (data.url) window.open(data.url, '_blank');
+              if (data.url) window.location.href = data.url;
             } catch (e) {
               console.error('Erreur de paiement', e);
             }
