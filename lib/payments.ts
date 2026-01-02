@@ -15,32 +15,46 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
   const returnUrl = process.env.PAYTECH_RETURN_URL || '';
   const siteId = process.env.PAYTECH_SITE_ID || '';
   if (!initUrl) throw new Error('PAYTECH_INIT_URL is not configured');
+  // Base payload used to derive multiple variants to satisfy differing provider expectations
+  const base: Record<string, string> = {
+    api_key: apiKey,
+    secret_key: secretKey,
+    ref: ref,
+    amount: String(amount),
+    currency,
+    description,
+    channel: 'card, mobile',
+    callback_url: callbackUrl,
+    success_url: returnUrl || callbackUrl,
+    cancel_url: returnUrl || callbackUrl,
+    site_id: siteId,
+  };
   const variants: Array<Record<string, string>> = [
     // Variant 1: standard keys
-    { ...payload },
+    { ...base },
     // Variant 2: alternate naming used by some PayTech integrations
     {
-      api_key: payload.api_key,
-      secret_key: payload.secret_key,
+      api_key: base.api_key,
+      secret_key: base.secret_key,
       ref_command: ref,
       item_name: description,
       amount: String(amount),
       currency,
-      channel: payload.channel,
-      ipn_url: callbackUrl || payload.callback_url,
-      success_url: payload.success_url,
-      cancel_url: payload.cancel_url,
-      site_id: siteId || payload.site_id,
+      channel: base.channel,
+      ipn_url: callbackUrl || base.callback_url,
+      success_url: base.success_url,
+      cancel_url: base.cancel_url,
+      site_id: siteId || base.site_id,
     },
     // Variant 3: minimal required fields
     {
-      api_key: payload.api_key,
-      secret_key: payload.secret_key,
+      api_key: base.api_key,
+      secret_key: base.secret_key,
       ref: ref,
       amount: String(amount),
       currency,
       item_name: description,
-      ipn_url: callbackUrl || payload.callback_url,
+      ipn_url: callbackUrl || base.callback_url,
     },
   ];
   let lastError = 'PayTech did not return a redirect URL';
@@ -73,37 +87,6 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
     lastError = data.message || data.error || lastError;
   }
   throw new Error(lastError);
-
-  // Try each variant with JSON then x-www-form-urlencoded
-  for (const payload of variants) {
-    // JSON attempt
-    let res = await fetch(initUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    let text = await res.text().catch(() => '');
-    let data: any = {};
-    try { data = JSON.parse(text); } catch {}
-    let redirect: string | undefined = data.redirect_url || data.payment_url || data.url;
-    if (redirect) return { url: redirect };
-
-    // Form-encoded attempt
-    const form = new URLSearchParams();
-    Object.entries(payload).forEach(([k, v]) => { if (v != null) form.append(k, String(v)); });
-    res = await fetch(initUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
-      body: form.toString(),
-    });
-    text = await res.text().catch(() => '');
-    data = {};
-    try { data = JSON.parse(text); } catch {}
-    redirect = data.redirect_url || data.payment_url || data.url;
-    if (redirect) return { url: redirect };
-  }
-
-  throw new Error('PayTech did not return a redirect URL (invalid request format)');
 }
 
 export async function buildPaymentUrl(input: PaymentInit) {
