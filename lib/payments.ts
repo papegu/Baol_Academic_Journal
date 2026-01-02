@@ -19,20 +19,27 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
     api_key: apiKey,
     secret_key: secretKey,
     ref,
-    amount,
+    amount: String(amount),
     currency,
     description,
+    channel: 'ALL',
   };
   if (callbackUrl) payload.callback_url = callbackUrl;
-  if (returnUrl) payload.return_url = returnUrl;
+  if (returnUrl) {
+    payload.return_url = returnUrl;
+    payload.success_url = returnUrl;
+    payload.cancel_url = returnUrl;
+  }
   if (siteId) payload.site_id = siteId;
   // First attempt: JSON payload
   let res = await fetch(initUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(payload),
   });
-  let data: any = await res.json().catch(() => ({}));
+  let dataText = await res.text().catch(() => '');
+  let data: any = {};
+  try { data = JSON.parse(dataText); } catch {}
   let redirect: string | undefined = data.redirect_url || data.payment_url || data.url;
   if (redirect) return { url: redirect };
   // Fallback attempt: form-encoded payload (some providers require this)
@@ -40,10 +47,12 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
   Object.entries(payload).forEach(([k, v]) => { if (v != null) form.append(k, String(v)); });
   res = await fetch(initUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
     body: form.toString(),
   });
-  data = await res.json().catch(() => ({}));
+  dataText = await res.text().catch(() => '');
+  data = {};
+  try { data = JSON.parse(dataText); } catch {}
   redirect = data.redirect_url || data.payment_url || data.url;
   if (!redirect) throw new Error(data.message || data.error || 'PayTech did not return a redirect URL');
   return { url: redirect };
