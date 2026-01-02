@@ -31,6 +31,13 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
     }
   }
   if (!initUrl) throw new Error('PAYTECH_INIT_URL is not configured');
+  const isCredentialError = (status: number, text: string) => {
+    const t = (text || '').toLowerCase();
+    return status === 401 || status === 403 ||
+      t.includes('invalid api key') || t.includes('invalid key') || t.includes('clé invalide') ||
+      t.includes('invalid secret') || t.includes('secret key') || t.includes('unauthorized') ||
+      t.includes('authent') || t.includes('access denied') || t.includes('not allowed');
+  };
   const attempts: Array<{ variantIndex: number; encoding: 'json' | 'form'; status: number; body: string; sentAmount?: string; sentCurrency?: string }> = [];
   // Base payload used to derive multiple variants to satisfy differing provider expectations
   const base: Record<string, string> = {
@@ -106,7 +113,13 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
     if (redirect) return { url: redirect };
     lastError = data.message || data.error || dataText || lastError;
   }
-  throw Object.assign(new Error(lastError), { attempts });
+  const last = attempts[attempts.length - 1];
+  const reason = last && isCredentialError(last.status, last.body)
+    ? 'Invalid or rejected PayTech API credentials'
+    : undefined;
+  const err = new Error(reason || lastError);
+  Object.assign(err, { attempts, reason });
+  throw err;
 }
 
 export async function buildPaymentUrl(input: PaymentInit) {
@@ -136,7 +149,7 @@ export async function buildPaymentUrl(input: PaymentInit) {
       const r = await requestPayTechRedirect(refBase, amount, currency, description);
       return { url: r.url, ref: refBase, mode: 'live', customerName, description };
     } catch (err: any) {
-      return { url: '', ref: refBase, mode: 'error', reason: err?.message || 'PayTech initiation failed', debug: err?.attempts ? { attempts: err.attempts } : undefined, customerName, description };
+      return { url: '', ref: refBase, mode: 'error', reason: err?.reason || err?.message || 'PayTech initiation failed', debug: err?.attempts ? { attempts: err.attempts } : undefined, customerName, description };
     }
   }
   // Fallback: no init URL configured, still attempt simulator for non-placeholder keys
