@@ -39,46 +39,63 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
       t.includes('authent') || t.includes('access denied') || t.includes('not allowed');
   };
   const attempts: Array<{ variantIndex: number; encoding: 'json' | 'form'; status: number; body: string; sentAmount?: string; sentCurrency?: string }> = [];
+  const ipn = (callbackUrl || '').trim();
+  const success = ((returnUrl || callbackUrl) || '').trim();
+  const cancel = ((returnUrl || callbackUrl) || '').trim();
   // Base payload used to derive multiple variants to satisfy differing provider expectations
   const base: Record<string, string> = {
     api_key: apiKey,
     secret_key: secretKey,
     ref: ref,
+    ref_command: ref,
+    item_name: description,
+    item_price: String(sendAmount),
     amount: String(sendAmount),
     currency: sendCurrency,
     description,
     channel: 'card, mobile',
-    callback_url: callbackUrl,
-    success_url: returnUrl || callbackUrl,
-    cancel_url: returnUrl || callbackUrl,
+    callback_url: ipn,
+    ipn_url: ipn,
+    success_url: success,
+    cancel_url: cancel,
     site_id: siteId,
   };
   const variants: Array<Record<string, string>> = [
-    // Variant 1: standard keys
-    { ...base },
-    // Variant 2: alternate naming used by some PayTech integrations
+    // Variant 1: explicit item fields expected by PayTech
     {
       api_key: base.api_key,
       secret_key: base.secret_key,
-      ref_command: ref,
-      item_name: description,
-      amount: String(amount),
-      currency,
-      channel: base.channel,
-      ipn_url: callbackUrl || base.callback_url,
+      ref_command: base.ref_command,
+      item_name: base.item_name,
+      item_price: base.item_price,
+      currency: base.currency,
+      ipn_url: base.ipn_url,
       success_url: base.success_url,
       cancel_url: base.cancel_url,
-      site_id: siteId || base.site_id,
+      site_id: base.site_id,
     },
-    // Variant 3: minimal required fields
+    // Variant 2: legacy keys (ref/amount) alongside item fields
     {
       api_key: base.api_key,
       secret_key: base.secret_key,
-      ref: ref,
-      amount: String(amount),
-      currency,
-      item_name: description,
-      ipn_url: callbackUrl || base.callback_url,
+      ref: base.ref,
+      amount: base.amount,
+      currency: base.currency,
+      item_name: base.item_name,
+      item_price: base.item_price,
+      ipn_url: base.ipn_url,
+      success_url: base.success_url,
+      cancel_url: base.cancel_url,
+      site_id: base.site_id,
+    },
+    // Variant 3: minimal strictly required fields
+    {
+      api_key: base.api_key,
+      secret_key: base.secret_key,
+      ref_command: base.ref_command,
+      item_name: base.item_name,
+      item_price: base.item_price,
+      ipn_url: base.ipn_url,
     },
   ];
   let lastError = 'PayTech did not return a redirect URL';
