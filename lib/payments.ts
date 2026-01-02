@@ -7,6 +7,45 @@ export type PaymentInit = {
   customerName?: string;
 };
 
+export function diagnosePayTechConfig() {
+  const apiKey = process.env.PAYTECH_API_KEY || '';
+  const secretKey = process.env.PAYTECH_SECRET_KEY || '';
+  const initUrl = process.env.PAYTECH_INIT_URL || '';
+  const callbackUrl = (process.env.PAYTECH_CALLBACK_URL || '').trim();
+  const returnUrl = (process.env.PAYTECH_RETURN_URL || '').trim();
+  const siteId = process.env.PAYTECH_SITE_ID || '';
+  const providerCurrency = process.env.PAYTECH_PROVIDER_CURRENCY || 'XOF';
+  const mask = (s: string) => {
+    if (!s) return '';
+    if (s.length <= 6) return '***';
+    return `${s.slice(0, 3)}…${s.slice(-2)}`;
+  };
+  const looksPlaceholder = (val?: string) => !!val && /change-me|placeholder|demo/i.test(val);
+  const isValidUrl = (u?: string) => {
+    try { if (!u) return false; new URL(u); return true; } catch { return false; }
+  };
+  const result = {
+    ok: !!apiKey && !!secretKey && !!initUrl,
+    reason: (!apiKey || !secretKey) ? 'Missing API credentials' : (!initUrl ? 'Missing PAYTECH_INIT_URL' : ''),
+    providerCurrency,
+    initUrlPresent: !!initUrl,
+    callbackUrlValid: isValidUrl(callbackUrl),
+    successUrlValid: isValidUrl(returnUrl || callbackUrl),
+    cancelUrlValid: isValidUrl(returnUrl || callbackUrl),
+    siteIdPresent: !!siteId,
+    keysLookPlaceholder: looksPlaceholder(apiKey) || looksPlaceholder(secretKey),
+    masked: {
+      apiKey: mask(apiKey),
+      secretKey: mask(secretKey),
+      initUrl: initUrl ? '[configured]' : '',
+      callbackUrl,
+      returnUrl,
+      siteId,
+    },
+  };
+  return result;
+}
+
 async function requestPayTechRedirect(ref: string, amount: number, currency: string, description: string) {
   const apiKey = process.env.PAYTECH_API_KEY || '';
   const secretKey = process.env.PAYTECH_SECRET_KEY || '';
