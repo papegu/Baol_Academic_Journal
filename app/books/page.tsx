@@ -37,7 +37,12 @@ export default function BooksPage(){
       if (res.ok && data.url) {
         window.location.href = data.url;
       } else {
-        setError(data.reason || 'Erreur de paiement');
+        const lastAttempt = data.debug?.attempts?.[data.debug.attempts.length - 1];
+        const providerText = typeof lastAttempt?.body === 'string' ? lastAttempt.body.trim() : '';
+        setError((data.reason || providerText || 'Erreur de paiement') + (providerText ? ` — Provider: ${providerText}` : ''));
+        if (data.debug) {
+          console.error('PayTech initiation debug', data.debug);
+        }
       }
     } catch (e: any) {
       setError(e?.message || 'Erreur de paiement');

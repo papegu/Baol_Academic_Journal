@@ -31,6 +31,7 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
     }
   }
   if (!initUrl) throw new Error('PAYTECH_INIT_URL is not configured');
+  const attempts: Array<{ variantIndex: number; encoding: 'json' | 'form'; status: number; body: string; sentAmount?: string; sentCurrency?: string }> = [];
   // Base payload used to derive multiple variants to satisfy differing provider expectations
   const base: Record<string, string> = {
     api_key: apiKey,
@@ -74,7 +75,8 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
     },
   ];
   let lastError = 'PayTech did not return a redirect URL';
-  for (const variant of variants) {
+  for (let i = 0; i < variants.length; i++) {
+    const variant = variants[i];
     // Try JSON first
     let res = await fetch(initUrl, {
       method: 'POST',
@@ -85,8 +87,9 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
     let data: any = {};
     try { data = JSON.parse(dataText); } catch {}
     let redirect: string | undefined = data.redirect_url || data.payment_url || data.url || data.checkout_url;
+    attempts.push({ variantIndex: i, encoding: 'json', status: res.status, body: dataText, sentAmount: variant.amount, sentCurrency: variant.currency });
     if (redirect) return { url: redirect };
-    lastError = data.message || data.error || lastError;
+    lastError = data.message || data.error || dataText || lastError;
     // Try form-encoded variant
     const form = new URLSearchParams();
     Object.entries(variant).forEach(([k, v]) => { if (v != null) form.append(k, String(v)); });
@@ -99,10 +102,11 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
     data = {};
     try { data = JSON.parse(dataText); } catch {}
     redirect = data.redirect_url || data.payment_url || data.url || data.checkout_url;
+    attempts.push({ variantIndex: i, encoding: 'form', status: res.status, body: dataText, sentAmount: variant.amount, sentCurrency: variant.currency });
     if (redirect) return { url: redirect };
-    lastError = data.message || data.error || lastError;
+    lastError = data.message || data.error || dataText || lastError;
   }
-  throw new Error(lastError);
+  throw Object.assign(new Error(lastError), { attempts });
 }
 
 export async function buildPaymentUrl(input: PaymentInit) {
@@ -132,7 +136,7 @@ export async function buildPaymentUrl(input: PaymentInit) {
       const r = await requestPayTechRedirect(refBase, amount, currency, description);
       return { url: r.url, ref: refBase, mode: 'live', customerName, description };
     } catch (err: any) {
-      return { url: '', ref: refBase, mode: 'error', reason: err?.message || 'PayTech initiation failed', customerName, description };
+      return { url: '', ref: refBase, mode: 'error', reason: err?.message || 'PayTech initiation failed', debug: err?.attempts ? { attempts: err.attempts } : undefined, customerName, description };
     }
   }
   // Fallback: no init URL configured, still attempt simulator for non-placeholder keys

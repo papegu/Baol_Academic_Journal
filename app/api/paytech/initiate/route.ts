@@ -6,5 +6,6 @@ export async function POST(req: NextRequest) {
   const { articleId, bookId, amount = 0, currency = 'USD', description = 'Frais de publication BAJP', customerName } = body;
 
   const result = await buildPaymentUrl({ articleId, bookId, amount, currency, description, customerName });
-  return NextResponse.json(result, { status: 200 });
+  const status = result.mode === 'error' ? 400 : 200;
+  return NextResponse.json(result, { status });
 }
