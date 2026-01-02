@@ -6,6 +6,7 @@ export default function AdminPage() {
   const [view, setView] = useState<'OVERVIEW'|'SUBMISSIONS'>('OVERVIEW');
   const [articles, setArticles] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissionStatusFilter, setSubmissionStatusFilter] = useState<string>('SUBMITTED');
   const [authors, setAuthors] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
   const [editingArticle, setEditingArticle] = useState<any | null>(null);
@@ -48,7 +49,8 @@ export default function AdminPage() {
 
   const fetchSubmissions = async () => {
     try {
-      const res = await fetch('/api/submissions');
+      const q = submissionStatusFilter ? `?status=${encodeURIComponent(submissionStatusFilter)}` : '';
+      const res = await fetch('/api/submissions' + q);
       const data = await res.json();
       setSubmissions(data.submissions || []);
     } catch {}
@@ -112,6 +114,10 @@ export default function AdminPage() {
     fetchJournals();
     fetchDomains();
   }, []);
+
+  useEffect(() => {
+    if (view === 'SUBMISSIONS') fetchSubmissions();
+  }, [view, submissionStatusFilter]);
 
   const updateStatus = async (id: number, status: string) => {
     setError('');
@@ -228,6 +234,19 @@ export default function AdminPage() {
 
       {view==='SUBMISSIONS' && (
         <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-brand-gray-700">Filtrer:</label>
+              <select value={submissionStatusFilter} onChange={e=>setSubmissionStatusFilter(e.target.value)} className="text-sm border rounded px-2 py-1">
+                <option value="SUBMITTED">Soumis</option>
+                <option value="ACCEPTED">Acceptés</option>
+                <option value="PUBLISHED">Publiés</option>
+                <option value="REJECTED">Rejetés</option>
+                <option value="">Tous</option>
+              </select>
+            </div>
+            <button className="text-sm px-2 py-1 rounded bg-brand-gray-200" onClick={()=>fetchSubmissions()}>Actualiser</button>
+          </div>
           <section className="bg-white border rounded-lg shadow-sm p-4">
             <h3 className="text-lg font-semibold text-brand-gray-800 mb-3">Liste des articles soumis</h3>
             <div className="overflow-x-auto">
@@ -242,16 +261,16 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {submissions.filter(s=>s.status==='SUBMITTED').map((s:any)=> (
+                  {submissions.map((s:any)=> (
                     <tr key={s.id} className="border-b">
                       <td className="py-2 px-2">{s.title}</td>
                       <td className="py-2 px-2">{s.authors}</td>
                       <td className="py-2 px-2">{new Date(s.createdAt).toLocaleDateString()}</td>
                       <td className="py-2 px-2">{s.status}</td>
                       <td className="py-2 px-2 space-x-2">
-                        <button className="bg-brand-green-600 text-white px-2 py-1 rounded" onClick={async ()=>{ await fetch(`/api/submissions/${s.id}/approve`, { method:'POST' }); fetchSubmissions(); fetchArticles(); }}>Valider</button>
-                        <button className="bg-brand-gray-200 text-brand-gray-800 px-2 py-1 rounded" onClick={()=> setEditingArticle(s)}>Modifier</button>
-                        <button className="bg-red-600 text-white px-2 py-1 rounded" onClick={async ()=>{ await fetch(`/api/submissions/${s.id}`, { method:'DELETE' }); fetchSubmissions(); }}>Supprimer</button>
+                        <button className="bg-brand-green-600 text-white px-2 py-1 rounded" onClick={()=> setConfirmApproveId(s.id)}>Valider</button>
+                        <button className="bg-brand-gray-200 text-brand-gray-800 px-2 py-1 rounded" onClick={()=> setEditingSubmission(s)}>Modifier</button>
+                        <button className="bg-red-600 text-white px-2 py-1 rounded" onClick={()=> setConfirmDeleteSubmissionId(s.id)}>Supprimer</button>
                       </td>
                     </tr>
                   ))}
@@ -278,7 +297,7 @@ export default function AdminPage() {
                       <td className="py-2 px-2">{new Date(a.createdAt).toLocaleDateString()}</td>
                       <td className="py-2 px-2 space-x-2">
                         <button className="bg-brand-gray-200 text-brand-gray-800 px-2 py-1 rounded" onClick={()=> setEditingArticle(a)}>Modifier</button>
-                        <button className="bg-red-600 text-white px-2 py-1 rounded" onClick={async ()=>{ await fetch(`/api/articles`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: a.id, status: 'REJECTED' }) }); fetchArticles(); }}>Supprimer</button>
+                        <button className="bg-red-600 text-white px-2 py-1 rounded" onClick={()=> setConfirmDeleteArticleId(a.id)}>Supprimer</button>
                       </td>
                     </tr>
                   ))}
@@ -315,6 +334,81 @@ export default function AdminPage() {
               <button className="bg-brand-blue-600 text-white px-3 py-1 rounded">Ajouter</button>
             </form>
           </section>
+        </div>
+      )}
+
+      {/* Confirm Approve Submission */}
+      {confirmApproveId != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-md rounded shadow-lg overflow-hidden">
+            <div className="px-4 py-3 border-b font-semibold">Valider la soumission</div>
+            <div className="p-4 text-sm">Confirmez-vous la validation de cette soumission ? Elle sera publiée immédiatement.</div>
+            <div className="p-4 flex justify-end gap-2">
+              <button className="px-3 py-1 rounded bg-brand-gray-200" onClick={()=>setConfirmApproveId(null)}>Annuler</button>
+              <button className="px-3 py-1 rounded bg-brand-green-600 text-white" onClick={async()=>{ const id = confirmApproveId!; setConfirmApproveId(null); await fetch(`/api/submissions/${id}/approve`, { method:'POST' }); fetchSubmissions(); fetchArticles(); }}>Valider</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Submission */}
+      {confirmDeleteSubmissionId != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-md rounded shadow-lg overflow-hidden">
+            <div className="px-4 py-3 border-b font-semibold">Supprimer la soumission</div>
+            <div className="p-4 text-sm">Voulez-vous vraiment supprimer définitivement cette soumission ?</div>
+            <div className="p-4 flex justify-end gap-2">
+              <button className="px-3 py-1 rounded bg-brand-gray-200" onClick={()=>setConfirmDeleteSubmissionId(null)}>Annuler</button>
+              <button className="px-3 py-1 rounded bg-red-600 text-white" onClick={async()=>{ const id = confirmDeleteSubmissionId!; setConfirmDeleteSubmissionId(null); await fetch(`/api/submissions/${id}`, { method:'DELETE' }); fetchSubmissions(); }}>Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Article */}
+      {confirmDeleteArticleId != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-md rounded shadow-lg overflow-hidden">
+            <div className="px-4 py-3 border-b font-semibold">Supprimer l'article</div>
+            <div className="p-4 text-sm">Confirmez-vous la suppression de l'article publié ?</div>
+            <div className="p-4 flex justify-end gap-2">
+              <button className="px-3 py-1 rounded bg-brand-gray-200" onClick={()=>setConfirmDeleteArticleId(null)}>Annuler</button>
+              <button className="px-3 py-1 rounded bg-red-600 text-white" onClick={async()=>{ const id = confirmDeleteArticleId!; setConfirmDeleteArticleId(null); await fetch(`/api/articles`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, status: 'REJECTED' }) }); fetchArticles(); }}>Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Submission Modal */}
+      {editingSubmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-xl rounded shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Modifier la soumission</div>
+              <button onClick={() => setEditingSubmission(null)} className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Fermer</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const title = (form.elements.namedItem('title') as HTMLInputElement).value;
+                const authors = (form.elements.namedItem('authors') as HTMLInputElement).value;
+                const abstract = (form.elements.namedItem('abstract') as HTMLInputElement).value;
+                await fetch(`/api/submissions/${editingSubmission.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, authors, abstract }) });
+                setEditingSubmission(null);
+                fetchSubmissions();
+              }}
+              className="p-4 space-y-3"
+            >
+              <input name="title" defaultValue={editingSubmission.title} placeholder="Titre" className="w-full border px-3 py-2 rounded" />
+              <input name="authors" defaultValue={editingSubmission.authors} placeholder="Auteurs" className="w-full border px-3 py-2 rounded" />
+              <input name="abstract" defaultValue={editingSubmission.abstract} placeholder="Résumé" className="w-full border px-3 py-2 rounded" />
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingSubmission(null)} className="px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Annuler</button>
+                <button type="submit" className="bg-brand-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

@@ -13,9 +13,12 @@ function isAuthorized() {
   return !!role; // any logged in user can view/create their submissions
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const subs = await getPrisma().submission.findMany({ orderBy: { createdAt: 'desc' } });
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get('status');
+  const where = status ? { status: status as any } : undefined;
+  const subs = await getPrisma().submission.findMany({ where, orderBy: { createdAt: 'desc' } });
   return NextResponse.json({ submissions: subs });
 }
 export async function POST(req: NextRequest) {
