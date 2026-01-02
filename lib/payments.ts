@@ -15,51 +15,64 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
   const returnUrl = process.env.PAYTECH_RETURN_URL || '';
   const siteId = process.env.PAYTECH_SITE_ID || '';
   if (!initUrl) throw new Error('PAYTECH_INIT_URL is not configured');
-  // Build several payload variants to satisfy differing PayTech specs
-  const base = {
-    api_key: apiKey,
-    secret_key: secretKey,
-    amount: String(amount),
-    currency,
-    channel: 'ALL',
-    description,
-    ref,
-  } as Record<string, string>;
-  if (callbackUrl) base.callback_url = callbackUrl;
-  if (returnUrl) {
-    base.return_url = returnUrl;
-    base.success_url = returnUrl;
-    base.cancel_url = returnUrl;
-  }
-  if (siteId) base.site_id = siteId;
-
   const variants: Array<Record<string, string>> = [
-    // v1: current field names
-    { ...base },
-    // v2: alternate naming used by some docs
+    // Variant 1: standard keys
+    { ...payload },
+    // Variant 2: alternate naming used by some PayTech integrations
     {
-      apikey: apiKey,
-      secret: secretKey,
+      api_key: payload.api_key,
+      secret_key: payload.secret_key,
       ref_command: ref,
       item_name: description,
-      command_name: description,
       amount: String(amount),
       currency,
-      ipn_url: callbackUrl || '',
-      success_url: returnUrl || '',
-      cancel_url: returnUrl || '',
-      site_id: siteId || '',
-      channel: 'ALL',
+      channel: payload.channel,
+      ipn_url: callbackUrl || payload.callback_url,
+      success_url: payload.success_url,
+      cancel_url: payload.cancel_url,
+      site_id: siteId || payload.site_id,
     },
-    // v3: minimal mandatory fields
+    // Variant 3: minimal required fields
     {
-      api_key: apiKey,
-      secret_key: secretKey,
-      ref,
+      api_key: payload.api_key,
+      secret_key: payload.secret_key,
+      ref: ref,
       amount: String(amount),
       currency,
+      item_name: description,
+      ipn_url: callbackUrl || payload.callback_url,
     },
-  ].map(v => Object.fromEntries(Object.entries(v).filter(([, val]) => val !== '')));
+  ];
+  let lastError = 'PayTech did not return a redirect URL';
+  for (const variant of variants) {
+    // Try JSON first
+    let res = await fetch(initUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(variant),
+    });
+    let dataText = await res.text().catch(() => '');
+    let data: any = {};
+    try { data = JSON.parse(dataText); } catch {}
+    let redirect: string | undefined = data.redirect_url || data.payment_url || data.url || data.checkout_url;
+    if (redirect) return { url: redirect };
+    lastError = data.message || data.error || lastError;
+    // Try form-encoded variant
+    const form = new URLSearchParams();
+    Object.entries(variant).forEach(([k, v]) => { if (v != null) form.append(k, String(v)); });
+    res = await fetch(initUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+      body: form.toString(),
+    });
+    dataText = await res.text().catch(() => '');
+    data = {};
+    try { data = JSON.parse(dataText); } catch {}
+    redirect = data.redirect_url || data.payment_url || data.url || data.checkout_url;
+    if (redirect) return { url: redirect };
+    lastError = data.message || data.error || lastError;
+  }
+  throw new Error(lastError);
 
   // Try each variant with JSON then x-www-form-urlencoded
   for (const payload of variants) {
