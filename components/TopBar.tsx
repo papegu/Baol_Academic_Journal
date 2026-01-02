@@ -27,7 +27,7 @@ export default function TopBar() {
         <div className="text-sm">
           <a href="/" className="hover:underline mr-3">Accueil</a>
           <a href="/articles" className="hover:underline mr-3">Articles</a>
-          <a href="http://senegal-livres.sn" target="_blank" rel="noopener" className="hover:underline">Books</a>
+          <a href="http://senegal-livres.sn" target="_blank" rel="noopener" className="hover:underline">Senegal-livres.sn</a>
         </div>
         {isAuthed ? (
           <button className="text-sm px-3 py-1 rounded bg-brand-gray-300 hover:bg-brand-gray-400" onClick={handleLogout}>
