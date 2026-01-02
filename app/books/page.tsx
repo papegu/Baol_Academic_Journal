@@ -31,7 +31,8 @@ export default function BooksPage(){
       });
       const data = await res.json();
       setPendingRef(data.ref || '');
-      if (data.url) window.open(data.url, '_blank');
+      // Navigate to the provider's checkout in the same tab to avoid popup blockers
+      if (data.url) window.location.href = data.url;
     } catch (e: any) {
       setError(e?.message || 'Erreur de paiement');
     }
@@ -63,18 +64,7 @@ export default function BooksPage(){
                       className="text-sm px-3 py-1 rounded bg-brand-blue-600 text-white"
                       onClick={() => initiatePayment(1000, b.id)}
                     >Payer et lire</button>
-                    <input
-                      value={pendingRef}
-                      onChange={(e) => setPendingRef(e.target.value)}
-                      placeholder="Référence paiement"
-                      className="text-sm border px-2 py-1 rounded"
-                    />
-                    <a
-                      href={`/api/books/pdf?key=${encodeURIComponent(b.pdfUrl)}&ref=${encodeURIComponent(pendingRef)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm px-3 py-1 rounded bg-brand-gray-200"
-                    >Lire (avec référence)</a>
+                    <span className="text-xs text-brand-gray-500">Vous serez redirigé vers le paiement sécurisé.</span>
                   </>
                 ) : (
                   <span className="text-xs text-brand-gray-500">Pas de PDF disponible</span>
