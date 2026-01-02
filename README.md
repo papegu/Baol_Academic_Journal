@@ -1,5 +1,6 @@
 # Baol Academic Journal Platform
 
+<!-- chore: trigger redeploy 2026-01-02 -->
 Fullstack Next.js 14 application for managing submissions, editorial review, payment, and publication.
 
 Frontend
