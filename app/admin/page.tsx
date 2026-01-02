@@ -3,16 +3,26 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
+  const [view, setView] = useState<'OVERVIEW'|'SUBMISSIONS'>('OVERVIEW');
   const [articles, setArticles] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const [authors, setAuthors] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
+  const [editingArticle, setEditingArticle] = useState<any | null>(null);
+  const [editingBook, setEditingBook] = useState<any | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [conferences, setConferences] = useState<any[]>([]);
   const [journals, setJournals] = useState<any[]>([]);
   const [domains, setDomains] = useState<any[]>([]);
+  const [editingAuthor, setEditingAuthor] = useState<any | null>(null);
+  const [editingConference, setEditingConference] = useState<any | null>(null);
+  const [editingJournal, setEditingJournal] = useState<any | null>(null);
+  const [editingDomain, setEditingDomain] = useState<any | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [viewerKey, setViewerKey] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const router = useRouter();
 
   // Mock : vérifie le rôle dans localStorage (à remplacer par une vraie auth plus tard)
@@ -34,6 +44,14 @@ export default function AdminPage() {
       setArticles(merged);
       setLoading(false);
     });
+  };
+
+  const fetchSubmissions = async () => {
+    try {
+      const res = await fetch('/api/submissions');
+      const data = await res.json();
+      setSubmissions(data.submissions || []);
+    } catch {}
   };
 
   const fetchAuthors = async () => {
@@ -86,6 +104,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchArticles();
+    fetchSubmissions();
     fetchAuthors();
     fetchBooks();
     fetchTransactions();
@@ -116,6 +135,7 @@ export default function AdminPage() {
   const submitted = articles.filter(a => a.status === 'SUBMITTED').length;
   const accepted = articles.filter(a => a.status === 'ACCEPTED').length;
   const published = articles.filter(a => a.status === 'PUBLISHED').length;
+  const visibleArticles = filterStatus ? articles.filter(a => a.status === filterStatus) : articles;
 
   return (
     <div className="space-y-6">
@@ -132,62 +152,170 @@ export default function AdminPage() {
           className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800"
         >Déconnexion</button>
       </div>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => setView('OVERVIEW')} className={`text-sm px-3 py-1 rounded ${view==='OVERVIEW'?'bg-brand-blue-600 text-white':'bg-brand-gray-200 text-brand-gray-800'}`}>Overview</button>
+        <button type="button" onClick={() => setView('SUBMISSIONS')} className={`text-sm px-3 py-1 rounded ${view==='SUBMISSIONS'?'bg-brand-blue-600 text-white':'bg-brand-gray-200 text-brand-gray-800'}`}>Submission</button>
+      </div>
+      {view==='OVERVIEW' && (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border rounded-lg shadow-sm p-4">
+        <button type="button" onClick={() => setFilterStatus('SUBMITTED')} className={`bg-white border rounded-lg shadow-sm p-4 text-left ${filterStatus==='SUBMITTED'?'ring-2 ring-brand-blue-600':''}`}>
           <div className="text-xs uppercase tracking-wide text-brand-gray-500">Soumis</div>
           <div className="text-2xl font-bold text-brand-gray-800">{submitted}</div>
-        </div>
-        <div className="bg-white border rounded-lg shadow-sm p-4">
+        </button>
+        <button type="button" onClick={() => setFilterStatus('ACCEPTED')} className={`bg-white border rounded-lg shadow-sm p-4 text-left ${filterStatus==='ACCEPTED'?'ring-2 ring-brand-blue-600':''}`}>
           <div className="text-xs uppercase tracking-wide text-brand-gray-500">Acceptés</div>
           <div className="text-2xl font-bold text-brand-gray-800">{accepted}</div>
-        </div>
-        <div className="bg-white border rounded-lg shadow-sm p-4">
+        </button>
+        <button type="button" onClick={() => setFilterStatus('PUBLISHED')} className={`bg-white border rounded-lg shadow-sm p-4 text-left ${filterStatus==='PUBLISHED'?'ring-2 ring-brand-blue-600':''}`}>
           <div className="text-xs uppercase tracking-wide text-brand-gray-500">Publiés</div>
           <div className="text-2xl font-bold text-brand-gray-800">{published}</div>
-        </div>
+        </button>
       </div>
-      {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
-      {loading ? (
-        <div className="text-gray-500">Chargement…</div>
-      ) : articles.length === 0 ? (
-        <div className="text-gray-500">Aucun article à valider.</div>
-      ) : (
-        <ul className="space-y-4">
-          {articles.map((article: any) => (
-            <li key={article.id} className="border p-4 rounded bg-white shadow-sm">
-              <div className="font-semibold text-brand-gray-800">{article.title}</div>
-              <div className="text-sm text-brand-gray-600">{article.authors}</div>
-              <div className="text-xs text-brand-gray-500">Statut : {article.status}</div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {article?.pdfUrl ? (
+      )}
+      {view==='OVERVIEW' && (
+        <>
+        {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
+        {loading ? (
+          <div className="text-gray-500">Chargement…</div>
+        ) : visibleArticles.length === 0 ? (
+          <div className="text-gray-500">Aucun article à valider.</div>
+        ) : (
+          <ul className="space-y-4">
+            {visibleArticles.map((article: any) => (
+              <li key={article.id} className="border p-4 rounded bg-white shadow-sm">
+                <div className="font-semibold text-brand-gray-800">{article.title}</div>
+                <div className="text-sm text-brand-gray-600">{article.authors}</div>
+                <div className="text-xs text-brand-gray-500">Statut : {article.status}</div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {article?.pdfUrl ? (
+                    <>
+                      <button
+                        onClick={() => setViewerKey(article.pdfUrl)}
+                        className="bg-brand-gray-200 text-brand-gray-800 px-3 py-1 rounded hover:bg-brand-gray-300"
+                      >Lire le PDF</button>
+                      <a
+                        href={`/api/articles/pdf/${article.pdfUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-brand-gray-200 text-brand-gray-800 px-3 py-1 rounded hover:bg-brand-gray-300"
+                      >Ouvrir dans un onglet</a>
+                    </>
+                  ) : (
+                    <span className="text-xs text-brand-gray-500">Aucun PDF associé</span>
+                  )}
+                </div>
+                <div className="mt-2">
+                  <button
+                    onClick={() => setEditingArticle(article)}
+                    className="bg-brand-gray-200 text-brand-gray-800 px-3 py-1 rounded hover:bg-brand-gray-300"
+                  >Modifier</button>
+                </div>
+                {article.status === 'SUBMITTED' && (
                   <>
-                    <button
-                      onClick={() => setViewerKey(article.pdfUrl)}
-                      className="bg-brand-gray-200 text-brand-gray-800 px-3 py-1 rounded hover:bg-brand-gray-300"
-                    >Lire le PDF</button>
-                    <a
-                      href={`/api/articles/pdf/${article.pdfUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-brand-gray-200 text-brand-gray-800 px-3 py-1 rounded hover:bg-brand-gray-300"
-                    >Ouvrir dans un onglet</a>
+                    <button onClick={() => updateStatus(article.id, 'ACCEPTED')} className="bg-brand-green-600 text-white px-3 py-1 rounded mr-2 hover:bg-brand-green-700">Accepter</button>
+                    <button onClick={() => updateStatus(article.id, 'REJECTED')} className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Rejeter</button>
                   </>
-                ) : (
-                  <span className="text-xs text-brand-gray-500">Aucun PDF associé</span>
                 )}
-              </div>
-              {article.status === 'SUBMITTED' && (
-                <>
-                  <button onClick={() => updateStatus(article.id, 'ACCEPTED')} className="bg-brand-green-600 text-white px-3 py-1 rounded mr-2 hover:bg-brand-green-700">Accepter</button>
-                  <button onClick={() => updateStatus(article.id, 'REJECTED')} className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Rejeter</button>
-                </>
-              )}
-              {article.status === 'ACCEPTED' && (
-                <button onClick={() => updateStatus(article.id, 'PUBLISHED')} className="bg-brand-blue-600 text-white px-3 py-1 rounded hover:bg-brand-blue-700">Publier</button>
-              )}
-            </li>
-          ))}
-        </ul>
+                {article.status === 'ACCEPTED' && (
+                  <button onClick={() => updateStatus(article.id, 'PUBLISHED')} className="bg-brand-blue-600 text-white px-3 py-1 rounded hover:bg-brand-blue-700">Publier</button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        </>
+      )}
+
+      {view==='SUBMISSIONS' && (
+        <div className="space-y-6">
+          <section className="bg-white border rounded-lg shadow-sm p-4">
+            <h3 className="text-lg font-semibold text-brand-gray-800 mb-3">Liste des articles soumis</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="py-2 px-2">Titre</th>
+                    <th className="py-2 px-2">Auteurs</th>
+                    <th className="py-2 px-2">Date</th>
+                    <th className="py-2 px-2">Statut</th>
+                    <th className="py-2 px-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submissions.filter(s=>s.status==='SUBMITTED').map((s:any)=> (
+                    <tr key={s.id} className="border-b">
+                      <td className="py-2 px-2">{s.title}</td>
+                      <td className="py-2 px-2">{s.authors}</td>
+                      <td className="py-2 px-2">{new Date(s.createdAt).toLocaleDateString()}</td>
+                      <td className="py-2 px-2">{s.status}</td>
+                      <td className="py-2 px-2 space-x-2">
+                        <button className="bg-brand-green-600 text-white px-2 py-1 rounded" onClick={async ()=>{ await fetch(`/api/submissions/${s.id}/approve`, { method:'POST' }); fetchSubmissions(); fetchArticles(); }}>Valider</button>
+                        <button className="bg-brand-gray-200 text-brand-gray-800 px-2 py-1 rounded" onClick={()=> setEditingArticle(s)}>Modifier</button>
+                        <button className="bg-red-600 text-white px-2 py-1 rounded" onClick={async ()=>{ await fetch(`/api/submissions/${s.id}`, { method:'DELETE' }); fetchSubmissions(); }}>Supprimer</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="bg-white border rounded-lg shadow-sm p-4">
+            <h3 className="text-lg font-semibold text-brand-gray-800 mb-3">Liste des articles publiés</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="py-2 px-2">Titre</th>
+                    <th className="py-2 px-2">Date de publication</th>
+                    <th className="py-2 px-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {articles.filter(a=>a.status==='PUBLISHED').map((a:any)=> (
+                    <tr key={a.id} className="border-b">
+                      <td className="py-2 px-2">{a.title}</td>
+                      <td className="py-2 px-2">{new Date(a.createdAt).toLocaleDateString()}</td>
+                      <td className="py-2 px-2 space-x-2">
+                        <button className="bg-brand-gray-200 text-brand-gray-800 px-2 py-1 rounded" onClick={()=> setEditingArticle(a)}>Modifier</button>
+                        <button className="bg-red-600 text-white px-2 py-1 rounded" onClick={async ()=>{ await fetch(`/api/articles`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: a.id, status: 'REJECTED' }) }); fetchArticles(); }}>Supprimer</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="bg-white border rounded-lg shadow-sm p-4">
+            <h3 className="text-lg font-semibold text-brand-gray-800 mb-3">Ajout d’un nouvel article</h3>
+            <form
+              onSubmit={async (e)=>{
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const title = (form.elements.namedItem('title') as HTMLInputElement).value;
+                const abstract = (form.elements.namedItem('abstract') as HTMLInputElement).value;
+                const authors = (form.elements.namedItem('authors') as HTMLInputElement).value;
+                const fileInput = form.elements.namedItem('file') as HTMLInputElement | null;
+                const file = fileInput?.files?.[0] || null;
+                const fd = new FormData();
+                fd.append('title', title);
+                fd.append('abstract', abstract);
+                fd.append('authors', authors);
+                if (file) fd.append('file', file);
+                const res = await fetch('/api/submissions', { method:'POST', body: fd });
+                if (res.ok) { fetchSubmissions(); form.reset?.call(form); }
+              }}
+              className="space-y-2"
+            >
+              <input name="title" placeholder="Titre" className="w-full border px-3 py-2 rounded" />
+              <input name="abstract" placeholder="Résumé" className="w-full border px-3 py-2 rounded" />
+              <input name="authors" placeholder="Auteurs" className="w-full border px-3 py-2 rounded" />
+              <input name="file" type="file" accept="application/pdf" className="w-full border px-3 py-2 rounded" />
+              <button className="bg-brand-blue-600 text-white px-3 py-1 rounded">Ajouter</button>
+            </form>
+          </section>
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -218,11 +346,7 @@ export default function AdminPage() {
                   <div className="text-sm text-brand-gray-600">{a.email}</div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
-                    const name = prompt('Nouveau nom', a.name) || a.name;
-                    await fetch(`/api/users/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-                    fetchAuthors();
-                  }}>Modifier</button>
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={() => setEditingAuthor(a)}>Modifier</button>
                   <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/users/${a.id}`, { method: 'DELETE' }); fetchAuthors(); }}>Supprimer</button>
                 </div>
               </li>
@@ -279,12 +403,18 @@ export default function AdminPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
-                    const title = prompt('Nouveau titre', b.title) || b.title;
-                    await fetch(`/api/books/${b.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }) });
-                    fetchBooks();
-                  }}>Modifier</button>
-                  <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/books/${b.id}`, { method: 'DELETE' }); fetchBooks(); }}>Supprimer</button>
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={() => setEditingBook(b)}>Modifier</button>
+                  {b?.published ? (
+                    <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/books/${b.id}`, { method: 'DELETE' }); fetchBooks(); }}>Supprimer</button>
+                  ) : null}
+                  <button
+                    className="text-sm px-2 py-1 rounded bg-brand-blue-600 text-white"
+                    onClick={async () => {
+                      const next = !b.published;
+                      await fetch(`/api/books/${b.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: next }) });
+                      fetchBooks();
+                    }}
+                  >{b?.published ? 'Dépublier' : 'Publier'}</button>
                 </div>
               </li>
             ))}
@@ -323,11 +453,7 @@ export default function AdminPage() {
                   <div className="text-sm text-brand-gray-600">{t.status}</div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
-                    const status = prompt('Nouveau statut (PENDING/PAID/FAILED)', t.status) || t.status;
-                    await fetch(`/api/transactions/${t.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
-                    fetchTransactions();
-                  }}>Modifier</button>
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={() => setEditingTransaction(t)}>Modifier</button>
                   <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/transactions/${t.id}`, { method: 'DELETE' }); fetchTransactions(); }}>Supprimer</button>
                 </div>
               </li>
@@ -374,11 +500,7 @@ export default function AdminPage() {
                   <div className="text-sm text-brand-gray-600">{c.location} {c.date}</div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
-                    const name = prompt('Nouveau nom', c.name) || c.name;
-                    await fetch(`/api/conferences/${c.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-                    fetchConferences();
-                  }}>Modifier</button>
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={() => setEditingConference(c)}>Modifier</button>
                   <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/conferences/${c.id}`, { method: 'DELETE' }); fetchConferences(); }}>Supprimer</button>
                 </div>
               </li>
@@ -412,11 +534,7 @@ export default function AdminPage() {
                   <div className="text-sm text-brand-gray-600">{j.issn} {j.url}</div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
-                    const name = prompt('Nouveau nom', j.name) || j.name;
-                    await fetch(`/api/journals/${j.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-                    fetchJournals();
-                  }}>Modifier</button>
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={() => setEditingJournal(j)}>Modifier</button>
                   <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/journals/${j.id}`, { method: 'DELETE' }); fetchJournals(); }}>Supprimer</button>
                 </div>
               </li>
@@ -441,11 +559,7 @@ export default function AdminPage() {
               <li key={d.id} className="flex items-center justify-between">
                 <div className="font-medium">{d.name}</div>
                 <div className="flex gap-2">
-                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={async () => {
-                    const name = prompt('Nouveau nom', d.name) || d.name;
-                    await fetch(`/api/domains/${d.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-                    fetchDomains();
-                  }}>Modifier</button>
+                  <button className="text-sm px-2 py-1 bg-brand-gray-200 rounded" onClick={() => setEditingDomain(d)}>Modifier</button>
                   <button className="text-sm px-2 py-1 bg-red-600 text-white rounded" onClick={async () => { await fetch(`/api/domains/${d.id}`, { method: 'DELETE' }); fetchDomains(); }}>Supprimer</button>
                 </div>
               </li>
@@ -500,6 +614,226 @@ export default function AdminPage() {
                 className="w-full h-full"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {editingArticle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-xl rounded shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Modifier l'article</div>
+              <button onClick={() => setEditingArticle(null)} className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Fermer</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const title = (form.elements.namedItem('title') as HTMLInputElement).value;
+                const authors = (form.elements.namedItem('authors') as HTMLInputElement).value;
+                const abstract = (form.elements.namedItem('abstract') as HTMLInputElement).value;
+                const res = await fetch(`/api/articles`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingArticle.id, title, authors, abstract }) });
+                if (res.ok) { setEditingArticle(null); fetchArticles(); }
+              }}
+              className="p-4 space-y-3"
+            >
+              <input name="title" defaultValue={editingArticle.title} placeholder="Titre" className="w-full border px-3 py-2 rounded" />
+              <input name="authors" defaultValue={editingArticle.authors} placeholder="Auteurs" className="w-full border px-3 py-2 rounded" />
+              <input name="abstract" defaultValue={editingArticle.abstract} placeholder="Résumé" className="w-full border px-3 py-2 rounded" />
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingArticle(null)} className="px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Annuler</button>
+                <button type="submit" className="bg-brand-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingBook && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-xl rounded shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Modifier le livre</div>
+              <button onClick={() => setEditingBook(null)} className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Fermer</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const title = (form.elements.namedItem('title') as HTMLInputElement).value;
+                const authors = (form.elements.namedItem('authors') as HTMLInputElement).value;
+                const description = (form.elements.namedItem('description') as HTMLInputElement).value;
+                const res = await fetch(`/api/books/${editingBook.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, authors, description }) });
+                if (res.ok) {
+                  setEditingBook(null);
+                  fetchBooks();
+                }
+              }}
+              className="p-4 space-y-3"
+            >
+              <input name="title" defaultValue={editingBook.title} placeholder="Titre" className="w-full border px-3 py-2 rounded" />
+              <input name="authors" defaultValue={editingBook.authors} placeholder="Auteurs" className="w-full border px-3 py-2 rounded" />
+              <input name="description" defaultValue={editingBook.description} placeholder="Description" className="w-full border px-3 py-2 rounded" />
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingBook(null)} className="px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Annuler</button>
+                <button type="submit" className="bg-brand-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingAuthor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-xl rounded shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Modifier l'auteur</div>
+              <button onClick={() => setEditingAuthor(null)} className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Fermer</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+                const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+                const res = await fetch(`/api/users/${editingAuthor.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email }) });
+                if (res.ok) { setEditingAuthor(null); fetchAuthors(); }
+              }}
+              className="p-4 space-y-3"
+            >
+              <input name="name" defaultValue={editingAuthor.name} placeholder="Nom" className="w-full border px-3 py-2 rounded" />
+              <input name="email" defaultValue={editingAuthor.email} placeholder="Email" className="w-full border px-3 py-2 rounded" />
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingAuthor(null)} className="px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Annuler</button>
+                <button type="submit" className="bg-brand-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingConference && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-xl rounded shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Modifier la conférence</div>
+              <button onClick={() => setEditingConference(null)} className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Fermer</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+                const location = (form.elements.namedItem('location') as HTMLInputElement).value;
+                const date = (form.elements.namedItem('date') as HTMLInputElement).value;
+                const description = (form.elements.namedItem('description') as HTMLInputElement).value;
+                const res = await fetch(`/api/conferences/${editingConference.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, location, date, description }) });
+                if (res.ok) { setEditingConference(null); fetchConferences(); }
+              }}
+              className="p-4 space-y-3"
+            >
+              <input name="name" defaultValue={editingConference.name} placeholder="Nom" className="w-full border px-3 py-2 rounded" />
+              <input name="location" defaultValue={editingConference.location || ''} placeholder="Lieu" className="w-full border px-3 py-2 rounded" />
+              <input name="date" defaultValue={editingConference.date || ''} placeholder="Date (ISO)" className="w-full border px-3 py-2 rounded" />
+              <input name="description" defaultValue={editingConference.description || ''} placeholder="Description" className="w-full border px-3 py-2 rounded" />
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingConference(null)} className="px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Annuler</button>
+                <button type="submit" className="bg-brand-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingJournal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-xl rounded shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Modifier le journal</div>
+              <button onClick={() => setEditingJournal(null)} className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Fermer</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+                const issn = (form.elements.namedItem('issn') as HTMLInputElement).value;
+                const url = (form.elements.namedItem('url') as HTMLInputElement).value;
+                const res = await fetch(`/api/journals/${editingJournal.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, issn, url }) });
+                if (res.ok) { setEditingJournal(null); fetchJournals(); }
+              }}
+              className="p-4 space-y-3"
+            >
+              <input name="name" defaultValue={editingJournal.name} placeholder="Nom" className="w-full border px-3 py-2 rounded" />
+              <input name="issn" defaultValue={editingJournal.issn || ''} placeholder="ISSN" className="w-full border px-3 py-2 rounded" />
+              <input name="url" defaultValue={editingJournal.url || ''} placeholder="URL" className="w-full border px-3 py-2 rounded" />
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingJournal(null)} className="px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Annuler</button>
+                <button type="submit" className="bg-brand-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingDomain && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-xl rounded shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Modifier le domaine</div>
+              <button onClick={() => setEditingDomain(null)} className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Fermer</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+                const res = await fetch(`/api/domains/${editingDomain.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                if (res.ok) { setEditingDomain(null); fetchDomains(); }
+              }}
+              className="p-4 space-y-3"
+            >
+              <input name="name" defaultValue={editingDomain.name} placeholder="Nom" className="w-full border px-3 py-2 rounded" />
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingDomain(null)} className="px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Annuler</button>
+                <button type="submit" className="bg-brand-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingTransaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[95vw] max-w-xl rounded shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <div className="font-semibold text-brand-gray-800 truncate">Modifier la transaction</div>
+              <button onClick={() => setEditingTransaction(null)} className="text-sm px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Fermer</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const reference = (form.elements.namedItem('reference') as HTMLInputElement).value;
+                const amount = parseFloat((form.elements.namedItem('amount') as HTMLInputElement).value);
+                const status = (form.elements.namedItem('status') as HTMLSelectElement).value;
+                const res = await fetch(`/api/transactions/${editingTransaction.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reference, amount, status }) });
+                if (res.ok) { setEditingTransaction(null); fetchTransactions(); }
+              }}
+              className="p-4 space-y-3"
+            >
+              <input name="reference" defaultValue={editingTransaction.reference} placeholder="Référence" className="w-full border px-3 py-2 rounded" />
+              <input name="amount" defaultValue={String(editingTransaction.amount)} placeholder="Montant" type="number" step="0.01" className="w-full border px-3 py-2 rounded" />
+              <select name="status" defaultValue={editingTransaction.status} className="w-full border px-3 py-2 rounded">
+                <option value="PENDING">En attente</option>
+                <option value="PAID">Payé</option>
+                <option value="FAILED">Échoué</option>
+              </select>
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setEditingTransaction(null)} className="px-3 py-1 rounded bg-brand-gray-200 hover:bg-brand-gray-300 text-brand-gray-800">Annuler</button>
+                <button type="submit" className="bg-brand-blue-600 text-white px-3 py-1 rounded">Enregistrer</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
