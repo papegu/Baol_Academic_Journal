@@ -67,6 +67,7 @@ model Transaction {
   id        Int               @id @default(autoincrement())
   reference String
   amount    Float
+  currency  String            @default("USD")
   status    TransactionStatus @default(PENDING)
   date      DateTime          @default(now())
   payments  Payment[]
@@ -77,6 +78,7 @@ model Payment {
   tx     Transaction @relation(fields: [txId], references: [id])
   txId   Int
   amount Float
+  currency String    @default("USD")
   paidAt DateTime    @default(now())
 }
 

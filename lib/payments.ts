@@ -14,14 +14,30 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
   const callbackUrl = process.env.PAYTECH_CALLBACK_URL || '';
   const returnUrl = process.env.PAYTECH_RETURN_URL || '';
   const siteId = process.env.PAYTECH_SITE_ID || '';
+  const providerCurrency = process.env.PAYTECH_PROVIDER_CURRENCY || 'XOF';
+  // Convert amount to provider currency if needed (USD -> XOF vice versa)
+  let sendAmount = amount;
+  let sendCurrency = currency || 'USD';
+  const xofPerUsd = Number(process.env.NEXT_PUBLIC_XOF_PER_USD || '600');
+  if (providerCurrency !== sendCurrency) {
+    if (providerCurrency === 'XOF' && sendCurrency === 'USD') {
+      sendAmount = Math.round((amount * (xofPerUsd > 0 ? xofPerUsd : 600)));
+      sendCurrency = 'XOF';
+    } else if (providerCurrency === 'USD' && sendCurrency === 'XOF') {
+      sendAmount = Math.round((amount / (xofPerUsd > 0 ? xofPerUsd : 600)) * 100) / 100;
+      sendCurrency = 'USD';
+    } else {
+      sendCurrency = providerCurrency;
+    }
+  }
   if (!initUrl) throw new Error('PAYTECH_INIT_URL is not configured');
   // Base payload used to derive multiple variants to satisfy differing provider expectations
   const base: Record<string, string> = {
     api_key: apiKey,
     secret_key: secretKey,
     ref: ref,
-    amount: String(amount),
-    currency,
+    amount: String(sendAmount),
+    currency: sendCurrency,
     description,
     channel: 'card, mobile',
     callback_url: callbackUrl,

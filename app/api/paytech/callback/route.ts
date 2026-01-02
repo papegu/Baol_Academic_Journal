@@ -15,11 +15,11 @@ export async function GET(req: NextRequest) {
       const prisma = getPrisma();
       const existing = await prisma.transaction.findFirst({ where: { reference: parsed.ref } });
       if (existing) {
-        await prisma.transaction.update({ where: { id: existing.id }, data: { status: 'PAID' as any } });
+        await prisma.transaction.update({ where: { id: existing.id }, data: { status: 'PAID' as any, currency: parsed.currency || existing.currency } });
       } else {
-        await prisma.transaction.create({ data: { reference: parsed.ref, amount: parsed.amount || 0, status: 'PAID' as any } });
+        await prisma.transaction.create({ data: { reference: parsed.ref, amount: parsed.amount || 0, currency: parsed.currency || 'USD', status: 'PAID' as any } });
       }
-      await prisma.payment.create({ data: { txId: (await prisma.transaction.findFirst({ where: { reference: parsed.ref } }))!.id, amount: parsed.amount || 0 } }).catch(() => {});
+      await prisma.payment.create({ data: { txId: (await prisma.transaction.findFirst({ where: { reference: parsed.ref } }))!.id, amount: parsed.amount || 0, currency: parsed.currency || 'USD' } }).catch(() => {});
     } catch {}
     // If ref encodes a book id, redirect user to read the book immediately
     if (parsed.ref.startsWith('BAJ-BOOK-')) {
