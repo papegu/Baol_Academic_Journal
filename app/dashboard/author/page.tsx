@@ -7,6 +7,7 @@ import PaymentButton from '../../../components/PaymentButton';
 export default function AuthorDashboardPage() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [payError, setPayError] = useState<string>('');
 
   useEffect(() => {
     // Prefer my articles endpoint if available, fallback to submitted
@@ -63,13 +64,23 @@ export default function AuthorDashboardPage() {
                 body: JSON.stringify({ articleId: target?.id || null, amount: amountUSD, currency: 'USD', description: 'Frais de publication BAJP' }),
               });
               const data = await res.json();
-              if (data.url) window.location.href = data.url;
+              if (res.ok && data.url) {
+                window.location.href = data.url;
+              } else {
+                const lastAttempt = data.debug?.attempts?.[data.debug.attempts.length - 1];
+                const providerText = typeof lastAttempt?.body === 'string' ? lastAttempt.body.trim() : '';
+                setPayError((data.reason || providerText || 'Erreur de paiement') + (providerText ? ` — Provider: ${providerText}` : ''));
+                if (data.debug) {
+                  console.error('PayTech initiation debug', data.debug);
+                }
+              }
             } catch (e) {
-              console.error('Erreur de paiement', e);
+              setPayError((e as any)?.message || 'Erreur de paiement');
             }
           }}
           disabled={accepted === 0}
         />
+        {payError && <div className="text-sm text-red-600 mt-2">{payError}</div>}
         <div className="text-xs text-brand-gray-500 mt-2">Le paiement est requis pour les articles acceptés avant publication.</div>
       </div>
     </div>

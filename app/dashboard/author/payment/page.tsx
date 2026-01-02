@@ -22,7 +22,12 @@ export default function AuthorPaymentPage() {
       if (res.ok && data?.url) {
         setLink(data.url);
       } else {
-        setMsg(data?.message || "Échec de l'initialisation du paiement");
+        const lastAttempt = data.debug?.attempts?.[data.debug.attempts.length - 1];
+        const providerText = typeof lastAttempt?.body === 'string' ? lastAttempt.body.trim() : '';
+        setMsg((data?.reason || providerText || "Échec de l'initialisation du paiement") + (providerText ? ` — Provider: ${providerText}` : ''));
+        if (data.debug) {
+          console.error('PayTech initiation debug', data.debug);
+        }
       }
     } catch (e) {
       setMsg("Erreur réseau");
