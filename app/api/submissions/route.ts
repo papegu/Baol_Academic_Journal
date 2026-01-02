@@ -17,9 +17,12 @@ export async function GET(req: NextRequest) {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status');
+  const page = Math.max(1, Number(searchParams.get('page') || 1));
+  const pageSize = Math.max(1, Math.min(100, Number(searchParams.get('pageSize') || 10)));
   const where = status ? { status: status as any } : undefined;
-  const subs = await getPrisma().submission.findMany({ where, orderBy: { createdAt: 'desc' } });
-  return NextResponse.json({ submissions: subs });
+  const total = await getPrisma().submission.count({ where });
+  const subs = await getPrisma().submission.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize });
+  return NextResponse.json({ submissions: subs, page, pageSize, total });
 }
 export async function POST(req: NextRequest) {
   if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

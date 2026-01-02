@@ -76,6 +76,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const book = await getPrisma().book.create({ data: { title, authors, description, pdfUrl: key } });
+  const book = await getPrisma().book.create({ data: { title, authors, description, pdfUrl: key, published: false } });
   return NextResponse.json({ book }, { status: 201 });
 }

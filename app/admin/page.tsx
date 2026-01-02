@@ -7,6 +7,13 @@ export default function AdminPage() {
   const [articles, setArticles] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [submissionStatusFilter, setSubmissionStatusFilter] = useState<string>('SUBMITTED');
+  const [submissionTotal, setSubmissionTotal] = useState<number>(0);
+  const [submissionPage, setSubmissionPage] = useState<number>(1);
+  const [submissionPageSize, setSubmissionPageSize] = useState<number>(10);
+  const [editingSubmission, setEditingSubmission] = useState<any | null>(null);
+  const [confirmApproveId, setConfirmApproveId] = useState<number | null>(null);
+  const [confirmDeleteSubmissionId, setConfirmDeleteSubmissionId] = useState<number | null>(null);
+  const [confirmDeleteArticleId, setConfirmDeleteArticleId] = useState<number | null>(null);
   const [authors, setAuthors] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
   const [editingArticle, setEditingArticle] = useState<any | null>(null);
@@ -49,10 +56,14 @@ export default function AdminPage() {
 
   const fetchSubmissions = async () => {
     try {
-      const q = submissionStatusFilter ? `?status=${encodeURIComponent(submissionStatusFilter)}` : '';
-      const res = await fetch('/api/submissions' + q);
+      const params = new URLSearchParams();
+      if (submissionStatusFilter) params.set('status', submissionStatusFilter);
+      params.set('page', String(submissionPage));
+      params.set('pageSize', String(submissionPageSize));
+      const res = await fetch('/api/submissions?' + params.toString());
       const data = await res.json();
       setSubmissions(data.submissions || []);
+      setSubmissionTotal(Number(data.total || 0));
     } catch {}
   };
 
@@ -117,7 +128,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (view === 'SUBMISSIONS') fetchSubmissions();
-  }, [view, submissionStatusFilter]);
+  }, [view, submissionStatusFilter, submissionPage, submissionPageSize]);
 
   const updateStatus = async (id: number, status: string) => {
     setError('');
@@ -245,7 +256,32 @@ export default function AdminPage() {
                 <option value="">Tous</option>
               </select>
             </div>
-            <button className="text-sm px-2 py-1 rounded bg-brand-gray-200" onClick={()=>fetchSubmissions()}>Actualiser</button>
+            <div className="flex items-center gap-2">
+              <button className="text-sm px-2 py-1 rounded bg-brand-gray-200" onClick={()=>fetchSubmissions()}>Actualiser</button>
+              <button className="text-sm px-2 py-1 rounded bg-brand-blue-600 text-white" onClick={()=>{
+                const rows = [ ['Titre','Auteurs','Date','Statut'], ...submissions.map((s:any)=>[
+                  s.title, s.authors, new Date(s.createdAt).toISOString(), s.status
+                ]) ];
+                const csv = rows.map(r=>r.map(x=>`"${String(x||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'submissions.csv'; a.click();
+                setTimeout(()=>URL.revokeObjectURL(url), 1000);
+              }}>Exporter CSV (Soumissions)</button>
+              <button className="text-sm px-2 py-1 rounded bg-brand-blue-600 text-white" onClick={()=>{
+                const published = articles.filter((a:any)=>a.status==='PUBLISHED');
+                const rows = [ ['Titre','Date de publication'], ...published.map((a:any)=>[
+                  a.title, new Date(a.createdAt).toISOString()
+                ]) ];
+                const csv = rows.map(r=>r.map(x=>`"${String(x||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'articles_publies.csv'; a.click();
+                setTimeout(()=>URL.revokeObjectURL(url), 1000);
+              }}>Exporter CSV (Publiés)</button>
+            </div>
           </div>
           <section className="bg-white border rounded-lg shadow-sm p-4">
             <h3 className="text-lg font-semibold text-brand-gray-800 mb-3">Liste des articles soumis</h3>
@@ -276,6 +312,19 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="flex items-center justify-between mt-3">
+              <div className="text-xs text-brand-gray-600">Total: {submissionTotal}</div>
+              <div className="flex items-center gap-2">
+                <button className="text-sm px-2 py-1 rounded bg-brand-gray-200" disabled={submissionPage<=1} onClick={()=>setSubmissionPage(p=>Math.max(1,p-1))}>Précédent</button>
+                <span className="text-sm">Page {submissionPage}</span>
+                <button className="text-sm px-2 py-1 rounded bg-brand-gray-200" disabled={(submissionPage*submissionPageSize)>=submissionTotal} onClick={()=>setSubmissionPage(p=>p+1)}>Suivant</button>
+                <select value={submissionPageSize} onChange={e=>{ setSubmissionPageSize(Number(e.target.value)); setSubmissionPage(1); }} className="text-sm border rounded px-2 py-1">
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
             </div>
           </section>
 

@@ -19,11 +19,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, status } = await req.json();
-  const articleId = Number(id);
-  if (!articleId || !status) return NextResponse.json({ message: 'Paramètres invalides' }, { status: 400 });
+  const payload = await req.json();
+  const articleId = Number(payload?.id);
+  if (!articleId) return NextResponse.json({ message: 'ID manquant' }, { status: 400 });
 
-  // If reject: delete DB record (PDF cleanup is handled separately or via R2 lifecycle)
+  const status = payload?.status as string | undefined;
+  const title = payload?.title as string | undefined;
+  const authors = payload?.authors as string | undefined;
+  const abstract = payload?.abstract as string | undefined;
+
   if (status === 'REJECTED') {
     const existing = await getPrisma().article.findUnique({ where: { id: articleId } });
     if (!existing) return NextResponse.json({ message: 'Article introuvable' }, { status: 404 });
@@ -31,8 +35,16 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ message: 'Soumission rejetée et supprimée' });
   }
 
-  const updated = await getPrisma().article.update({ where: { id: articleId }, data: { status } });
-  return NextResponse.json({ message: 'Statut mis à jour', article: updated });
+  const data: any = {};
+  if (typeof status === 'string' && status.length > 0) data.status = status as any;
+  if (typeof title === 'string') data.title = title;
+  if (typeof authors === 'string') data.authors = authors;
+  if (typeof abstract === 'string') data.abstract = abstract;
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ message: 'Aucune donnée à mettre à jour' }, { status: 400 });
+  }
+  const updated = await getPrisma().article.update({ where: { id: articleId }, data });
+  return NextResponse.json({ message: 'Article mis à jour', article: updated });
 }
 
 export async function POST(req: NextRequest) {

@@ -8,6 +8,7 @@ export default function Header() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [lang, setLang] = useState<'fr' | 'en' | 'es' | 'it'>('fr');
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     const m = document.cookie.match(/(?:^|; )lang=([^;]+)/);
@@ -15,6 +16,8 @@ export default function Header() {
       const v = decodeURIComponent(m[1]) as any;
       if (['fr','en','es','it'].includes(v)) setLang(v);
     }
+    const r = document.cookie.match(/(?:^|; )role=([^;]+)/);
+    if (r) setRole(decodeURIComponent(r[1]));
   }, []);
 
   function applyLang(next: 'fr' | 'en' | 'es' | 'it'){
@@ -82,6 +85,9 @@ export default function Header() {
           <Link className="text-white hover:text-green-200 font-medium" href="/conferences">CONFERENCES</Link>
           <Link className="text-white hover:text-green-200 font-medium" href="/books">Books</Link>
           <Link className="text-white hover:text-green-200 font-medium" href="/submit">Submission</Link>
+          {role === 'ADMIN' || role === 'EDITOR' ? (
+            <Link className="bg-white text-green-800 px-3 py-1 rounded border border-green-800 hover:bg-green-50 font-medium" href="/admin">Admin</Link>
+          ) : null}
           <form action="/search" method="GET" className="flex items-center gap-2">
             <label htmlFor="q" className="sr-only">Search for</label>
             <input id="q" name="q" type="text" placeholder="Search for" className="border px-2 py-1 rounded bg-white text-black" />

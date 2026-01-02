@@ -4,6 +4,7 @@ export type Book = {
   authors: string;
   description: string;
   pdfUrl?: string;
+  published?: boolean;
 };
 
 let bookSeq = 1;
@@ -14,7 +15,7 @@ export function listBooks() {
 }
 
 export function createBook(input: Omit<Book, 'id'>) {
-  const item: Book = { id: bookSeq++, ...input };
+  const item: Book = { id: bookSeq++, published: false, ...input };
   books.push(item);
   return item;
 }
