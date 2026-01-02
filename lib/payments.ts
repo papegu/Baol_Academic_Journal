@@ -35,7 +35,7 @@ async function requestPayTechRedirect(ref: string, amount: number, currency: str
   return { url: redirect };
 }
 
-export function buildPaymentUrl(input: PaymentInit) {
+export async function buildPaymentUrl(input: PaymentInit) {
   const { articleId, bookId, amount, currency = 'XOF', description = 'Frais de publication BAJP', customerName } = input;
   const apiKey = process.env.PAYTECH_API_KEY;
   const secretKey = process.env.PAYTECH_SECRET_KEY;
@@ -58,9 +58,12 @@ export function buildPaymentUrl(input: PaymentInit) {
   // With real keys, use configured PayTech initiation endpoint to obtain redirect URL
   const initUrl = process.env.PAYTECH_INIT_URL;
   if (initUrl) {
-    return requestPayTechRedirect(refBase, amount, currency, description)
-      .then(r => ({ url: r.url, ref: refBase, mode: 'live', customerName, description }))
-      .catch(err => ({ url: '', ref: refBase, mode: 'error', reason: err?.message || 'PayTech initiation failed', customerName, description }));
+    try {
+      const r = await requestPayTechRedirect(refBase, amount, currency, description);
+      return { url: r.url, ref: refBase, mode: 'live', customerName, description };
+    } catch (err: any) {
+      return { url: '', ref: refBase, mode: 'error', reason: err?.message || 'PayTech initiation failed', customerName, description };
+    }
   }
   // Fallback: no init URL configured, still attempt simulator for non-placeholder keys
   const simulatedUrl = `https://paytech.sn/simulate/redirect?ref=${encodeURIComponent(refBase)}&amount=${encodeURIComponent(amount)}&currency=${encodeURIComponent(currency)}&desc=${encodeURIComponent(description || '')}`;
